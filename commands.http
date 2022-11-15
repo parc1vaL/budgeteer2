@@ -92,6 +92,21 @@ content-type: application/json
 
 ###
 
+PUT http://localhost:5002/api/transactions/7 HTTP/1.1
+content-type: application/json
+
+{
+  "transactionType": 1,
+  "accountId": 3,
+  "transferAccountId": 2,
+  "categoryId": 3,
+  "date": "2022-11-15",
+  "payee": null,
+  "incomeType": 0,
+  "amount": 100,
+  "isCleared": false
+}
+
 ###
 
 GET http://localhost:5002/api/budgets/2022/11 HTTP/1.1
@@ -103,6 +118,13 @@ POST http://localhost:5002/api/budgets/2022/11/2 HTTP/1.1
 Content-Type: application/json
 
 200
+
+###
+
+POST http://localhost:5002/api/budgets/2022/11/3 HTTP/1.1
+Content-Type: application/json
+
+400
 
 ###
 

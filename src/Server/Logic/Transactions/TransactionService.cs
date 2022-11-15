@@ -122,6 +122,11 @@ public class TransactionService
                 + "'Transfer' but no transaction account ID set.");
         }
 
+        var accountOnBudget = await this.context.Accounts
+            .Where(a => a.Id == request.AccountId)
+            .Select(a => a.OnBudget)
+            .FirstOrDefaultAsync();
+
         using var dbTransaction = await this.context.Database.BeginTransactionAsync();
 
         var transaction = new Transaction
@@ -131,7 +136,7 @@ public class TransactionService
             Payee = null,
             IsCleared = request.IsCleared,
             AccountId = request.AccountId,
-            CategoryId = request.CategoryId,
+            CategoryId = accountOnBudget ? request.CategoryId : default,
             TransferAccountId = request.TransferAccountId,
             Date = request.Date,
             Amount = request.Amount,
@@ -148,7 +153,7 @@ public class TransactionService
             Payee = null,
             IsCleared = false,
             AccountId = request.TransferAccountId.Value,
-            CategoryId = request.CategoryId,
+            CategoryId = accountOnBudget ? default : request.CategoryId,
             TransferAccountId = request.AccountId,
             Date = request.Date,
             Amount = -1.0M * request.Amount,
@@ -239,28 +244,33 @@ public class TransactionService
                 nameof(request));
         }
 
+        var accountOnBudget = await this.context.Accounts
+            .Where(a => a.Id == request.AccountId)
+            .Select(a => a.OnBudget)
+            .FirstOrDefaultAsync();
+
         // unchanged:
         transaction.TransactionType = TransactionType.Internal;
         transaction.TransferTransactionId = transaction.TransferTransactionId;
         transaction.IncomeType = IncomeType.None;
-        transaction.CategoryId = null;
         transaction.Payee = null;
 
         transfer.TransactionType = TransactionType.Internal;
         transfer.TransferTransactionId = transfer.TransferTransactionId;
         transfer.IncomeType = IncomeType.None;
-        transfer.CategoryId = null;
         transfer.Payee = null;
         transfer.IsCleared = transfer.IsCleared;
 
         // potentially changing:
         transaction.AccountId = request.AccountId;
+        transaction.CategoryId = accountOnBudget ? request.CategoryId : default;
         transaction.TransferAccountId = request.TransferAccountId.Value;
         transaction.Date = request.Date;
         transaction.Amount = request.Amount;
         transaction.IsCleared = request.IsCleared;
 
         transfer.AccountId = request.TransferAccountId.Value;
+        transfer.CategoryId = accountOnBudget ? default : request.CategoryId;
         transfer.TransferAccountId = request.AccountId;
         transfer.Date = request.Date;
         transfer.Amount = -1.0M * request.Amount;
@@ -313,6 +323,11 @@ public class TransactionService
                 nameof(request));
         }
 
+        var accountOnBudget = await this.context.Accounts
+            .Where(a => a.Id == request.AccountId)
+            .Select(a => a.OnBudget)
+            .FirstOrDefaultAsync();
+
         using var dbTransaction = await this.context.Database.BeginTransactionAsync();
 
         // create new transfer
@@ -323,7 +338,7 @@ public class TransactionService
             Payee = null,
             IsCleared = false,
             AccountId = request.TransferAccountId.Value,
-            CategoryId = request.CategoryId,
+            CategoryId = accountOnBudget ? default : request.CategoryId,
             TransferAccountId = request.AccountId,
             Date = request.Date,
             Amount = -1.0M * request.Amount,
@@ -334,11 +349,11 @@ public class TransactionService
         transaction.TransactionType = TransactionType.Internal;
         transaction.TransferTransactionId = transaction.TransferTransactionId;
         transaction.IncomeType = IncomeType.None;
-        transaction.CategoryId = null;
         transaction.Payee = null;
 
         // adjust original transaction
         transaction.AccountId = request.AccountId;
+        transaction.CategoryId = accountOnBudget ? request.CategoryId : default;
         transaction.TransferAccountId = request.TransferAccountId.Value;
         transaction.Date = request.Date;
         transaction.Amount = request.Amount;

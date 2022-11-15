@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Budgeteer.Server.Migrations
 {
     [DbContext(typeof(BudgetContext))]
-    [Migration("20221114205115_Initial")]
+    [Migration("20221115170731_Initial")]
     partial class Initial
     {
         /// <inheritdoc />
@@ -50,6 +50,27 @@ namespace Budgeteer.Server.Migrations
                     b.ToTable("accounts", (string)null);
                 });
 
+            modelBuilder.Entity("Budgeteer.Server.Entities.Category", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("name");
+
+                    b.HasKey("Id")
+                        .HasName("pk_categories");
+
+                    b.ToTable("categories", (string)null);
+                });
+
             modelBuilder.Entity("Budgeteer.Server.Entities.Transaction", b =>
                 {
                     b.Property<int>("Id")
@@ -66,6 +87,10 @@ namespace Budgeteer.Server.Migrations
                     b.Property<decimal>("Amount")
                         .HasColumnType("numeric")
                         .HasColumnName("amount");
+
+                    b.Property<int?>("CategoryId")
+                        .HasColumnType("integer")
+                        .HasColumnName("category_id");
 
                     b.Property<DateOnly>("Date")
                         .HasColumnType("date")
@@ -102,6 +127,9 @@ namespace Budgeteer.Server.Migrations
                     b.HasIndex("AccountId")
                         .HasDatabaseName("ix_transactions_account_id");
 
+                    b.HasIndex("CategoryId")
+                        .HasDatabaseName("ix_transactions_category_id");
+
                     b.HasIndex("Payee")
                         .HasDatabaseName("ix_transactions_payee");
 
@@ -124,6 +152,12 @@ namespace Budgeteer.Server.Migrations
                         .IsRequired()
                         .HasConstraintName("fk_transactions_accounts_account_id");
 
+                    b.HasOne("Budgeteer.Server.Entities.Category", "Category")
+                        .WithMany("Transactions")
+                        .HasForeignKey("CategoryId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .HasConstraintName("fk_transactions_categories_category_id");
+
                     b.HasOne("Budgeteer.Server.Entities.Account", "TransferAccount")
                         .WithMany()
                         .HasForeignKey("TransferAccountId")
@@ -137,12 +171,19 @@ namespace Budgeteer.Server.Migrations
 
                     b.Navigation("Account");
 
+                    b.Navigation("Category");
+
                     b.Navigation("TransferAccount");
 
                     b.Navigation("TransferTransaction");
                 });
 
             modelBuilder.Entity("Budgeteer.Server.Entities.Account", b =>
+                {
+                    b.Navigation("Transactions");
+                });
+
+            modelBuilder.Entity("Budgeteer.Server.Entities.Category", b =>
                 {
                     b.Navigation("Transactions");
                 });

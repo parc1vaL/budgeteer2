@@ -7,6 +7,8 @@ using System.Reflection;
 using Budgeteer.Server.Logic.Accounts;
 using Budgeteer.Server.Logic.Transactions;
 using Microsoft.OpenApi.Models;
+using Budgeteer.Server.Logic.Categories;
+using Budgeteer.Server.Logic.Budgets;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -14,7 +16,9 @@ Log.Logger = new LoggerConfiguration().CreateBootstrapLogger();
 
 // Add services to the container.
 builder.Services.AddTransient<AccountService>();
+builder.Services.AddTransient<CategoryService>();
 builder.Services.AddTransient<TransactionService>();
+builder.Services.AddTransient<BudgetService>();
 
 builder.Services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
 
@@ -67,7 +71,9 @@ app.MapRazorPages();
 app.UseSerilogRequestLogging();
 
 app.MapAccounts();
+app.MapCategories();
 app.MapTransactions();
+app.MapBudgets();
 
 app.MapControllers();
 app.MapFallbackToFile("index.html");

@@ -1,6 +1,6 @@
 namespace Budgeteer.Shared.Transactions;
 
-public record TransactionListItem
+public class TransactionListItem
 {
     public required int Id { get; init; }
 
@@ -12,9 +12,9 @@ public record TransactionListItem
 
     public required string Account { get; init; } = string.Empty;
 
-    // public required int? CategoryId { get; init; }
+    public required int? CategoryId { get; init; }
 
-    // public required string? Category { get; init; }
+    public required string? Category { get; init; }
 
     public required DateOnly Date { get; init; }
 

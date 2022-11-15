@@ -1,6 +1,6 @@
 namespace Budgeteer.Shared.Accounts;
 
-public record AccountListItem
+public class AccountListItem
 {
     public required int Id { get; init; }
 

@@ -11,6 +11,15 @@ public static class Operations
         public const string Delete = "DeleteAccount";
     }
 
+    public static class Categories
+    {
+        public const string GetList = "GetCategories";
+        public const string GetDetails = "GetCategory";
+        public const string Create = "CreateCategory";
+        public const string Update = "UpdateCategory";
+        public const string Delete = "DeleteCategory";
+    }
+
     public static class Transactions
     {
         public const string GetList = "GetTransactions";
@@ -18,5 +27,11 @@ public static class Operations
         public const string Create = "CreateTransaction";
         public const string Update = "UpdateTransaction";
         public const string Delete = "DeleteTransaction";
+    }
+
+    public static class Budgets
+    {
+        public const string Get = "GetBudget";
+        public const string CreateOrUpdate = "CreateOrUpdateBudget";
     }
 }

@@ -2,7 +2,6 @@ using System.Net.Mime;
 using Budgeteer.Server.Entities;
 using Budgeteer.Server.Logic.Accounts;
 using Budgeteer.Shared.Accounts;
-using Budgeteer.Shared.Transactions;
 
 namespace Budgeteer.Server.Endpoints;
 
@@ -14,7 +13,8 @@ public static class AccountEndpoints
 
         app.MapGet("/api/accounts", (AccountService service) => service.GetAccountsAsync())
             .WithName(Operations.Accounts.GetList)
-            .WithTags(GroupName);
+            .WithTags(GroupName)
+            .Produces<AccountListItem[]>(StatusCodes.Status200OK, MediaTypeNames.Application.Json);
 
         app.MapGet("/api/accounts/{id:int}", (int id, AccountService service) => service.GetAccountAsync(id))
             .WithName(Operations.Accounts.GetDetails)

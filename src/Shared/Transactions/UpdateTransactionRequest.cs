@@ -6,9 +6,9 @@ public class UpdateTransactionRequest
 
     public required int AccountId { get; init; }
 
-    public required int? TransactionAccountId { get; init; }
+    public required int? TransferAccountId { get; init; }
 
-    // public required int? CategoryId { get; init; }
+    public required int? CategoryId { get; init; }
 
     public required DateOnly Date { get; init; }
 

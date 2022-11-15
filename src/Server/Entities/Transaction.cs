@@ -1,4 +1,5 @@
-﻿using Budgeteer.Shared;
+﻿using System.Text.Json.Serialization;
+using Budgeteer.Shared;
 
 namespace Budgeteer.Server.Entities;
 
@@ -12,19 +13,23 @@ public class Transaction
 
     public required int AccountId { get; set; }
 
+    [JsonIgnore]
     public Account Account { get; set; } = null!;
 
     public required int? TransferAccountId { get; set; }
 
+    [JsonIgnore]
     public Account? TransferAccount { get; set; }
 
-    public int? TransferTransactionId { get; set; }
+    public required int? TransferTransactionId { get; set; }
 
+    [JsonIgnore]
     public Transaction? TransferTransaction { get; set; }
 
-    // public int? CategoryId { get; set; }
+    public required int? CategoryId { get; set; }
 
-    // public Category? Category { get; set; }
+    [JsonIgnore]
+    public Category? Category { get; set; }
 
     public required DateOnly Date { get; set; }
 

@@ -13,7 +13,7 @@ namespace Budgeteer.Persistence.Configuration
             builder.HasIndex(e => e.Payee);
 
             builder.HasOne(e => e.Account).WithMany(e => e.Transactions).IsRequired().OnDelete(DeleteBehavior.Cascade);
-            // builder.HasOne(e => e.Category).WithMany(e => e!.Transactions).OnDelete(DeleteBehavior.Cascade);
+            builder.HasOne(e => e.Category).WithMany(e => e.Transactions).OnDelete(DeleteBehavior.Cascade);
             builder.HasOne(e => e.TransferTransaction).WithOne().OnDelete(DeleteBehavior.Cascade);
 
             builder.Property(e => e.Date).HasColumnType("date");

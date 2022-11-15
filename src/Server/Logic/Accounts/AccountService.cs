@@ -1,6 +1,6 @@
 using Budgeteer.Server.Entities;
+using Budgeteer.Shared;
 using Budgeteer.Shared.Accounts;
-using Budgeteer.Shared.Transactions;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 
@@ -25,27 +25,33 @@ public class AccountService
         this.updateValidator = updateValidator;
     }
 
-    public async Task<AccountListItem[]> GetAccountsAsync()
+    public async Task<IResult> GetAccountsAsync()
     {
-        return await this.context.Accounts
-            .AsNoTracking()
-            .Select(a => new AccountListItem
-            {
-                Id = a.Id,
-                Name = a.Name,
-                OnBudget = a.OnBudget,
-                Balance = 0.0m,
-            })
-            .ToArrayAsync();
+        return Results.Ok(
+            await this.context.Accounts
+                .AsNoTracking()
+                .Select(a => new AccountListItem
+                {
+                    Id = a.Id,
+                    Name = a.Name,
+                    OnBudget = a.OnBudget,
+                    Balance = a.Transactions.Sum(t => t.Amount),
+                })
+                .ToArrayAsync());
     }
 
     public async Task<IResult> GetAccountAsync(int id)
     {
         var result = await this.context.Accounts
             .AsNoTracking()
-            .Where(a => a.Id == id)
-            .Select(a => new AccountDetails { Id = a.Id, Name = a.Name, OnBudget = a.OnBudget, })
-            .FirstOrDefaultAsync();
+            .Select(a => new AccountDetails 
+            { 
+                Id = a.Id, 
+                Name = a.Name, 
+                OnBudget = a.OnBudget,
+                Balance = a.Transactions.Sum(t => t.Amount),
+            })
+            .FirstOrDefaultAsync(a => a.Id == id);
 
         return result is not null
             ? Results.Ok(result)
@@ -61,6 +67,8 @@ public class AccountService
             return Results.ValidationProblem(validationResult.ToDictionary());
         }
 
+        using var dbTransaction = await this.context.Database.BeginTransactionAsync();
+
         var account = new Account
         {
             Name = request.Name,
@@ -68,8 +76,26 @@ public class AccountService
         };
 
         this.context.Accounts.Add(account);
-
         await this.context.SaveChangesAsync();
+
+        var balance = new Transaction
+        {
+            AccountId = account.Id,
+            Amount = request.Balance,
+            CategoryId = null,
+            Date = DateOnly.FromDateTime(DateTime.Today),
+            IncomeType = IncomeType.CurrentMonth,
+            IsCleared = true,
+            Payee = "Initial balance",
+            TransactionType = TransactionType.External,
+            TransferAccountId = null,
+            TransferTransactionId = null,
+        };
+
+        this.context.Transactions.Add(balance);
+        await this.context.SaveChangesAsync();
+
+        await dbTransaction.CommitAsync();
 
         return Results.Created(
             this.linkGenerator.GetPathByName(Operations.Accounts.GetDetails, new() { ["id"] = account.Id, })

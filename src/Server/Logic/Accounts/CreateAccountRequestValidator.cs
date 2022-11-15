@@ -1,5 +1,4 @@
 using Budgeteer.Shared.Accounts;
-using Budgeteer.Shared.Transactions;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 

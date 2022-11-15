@@ -114,14 +114,14 @@ Content-Type: application/json
 
 ###
 
-POST http://localhost:5002/api/budgets/2022/11/2 HTTP/1.1
+PUT http://localhost:5002/api/budgets/2022/11/2 HTTP/1.1
 Content-Type: application/json
 
 200
 
 ###
 
-POST http://localhost:5002/api/budgets/2022/11/3 HTTP/1.1
+PUT http://localhost:5002/api/budgets/2022/11/3 HTTP/1.1
 Content-Type: application/json
 
 400

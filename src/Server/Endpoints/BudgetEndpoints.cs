@@ -20,7 +20,7 @@ public static class BudgetEndpoints
             .Produces<BudgetMonth>(StatusCodes.Status200OK, MediaTypeNames.Application.Json)
             .Produces<HttpValidationProblemDetails>(StatusCodes.Status400BadRequest, MediaTypeNames.Application.Json);
 
-        app.MapPost(
+        app.MapPut(
             "/api/budgets/{year:int}/{month:int}/{categoryId:int}",
             (int year, int month, int categoryId, [FromBody]decimal amount, BudgetService service, CancellationToken cancellationToken)
                 => service.CreateOrUpdateBudget(new CreateOrUpdateBudgetRequest { Year = year, Month = month, CategoryId = categoryId, Amount = amount, }, cancellationToken))

@@ -25,7 +25,7 @@ public class AccountService
         this.updateValidator = updateValidator;
     }
 
-    public async Task<IResult> GetAccountsAsync()
+    public async Task<IResult> GetAccountsAsync(CancellationToken cancellationToken)
     {
         return Results.Ok(
             await this.context.Accounts
@@ -37,10 +37,10 @@ public class AccountService
                     OnBudget = a.OnBudget,
                     Balance = a.Transactions.Sum(t => t.Amount),
                 })
-                .ToArrayAsync());
+                .ToArrayAsync(cancellationToken));
     }
 
-    public async Task<IResult> GetAccountAsync(int id)
+    public async Task<IResult> GetAccountAsync(int id, CancellationToken cancellationToken)
     {
         var result = await this.context.Accounts
             .AsNoTracking()
@@ -51,23 +51,23 @@ public class AccountService
                 OnBudget = a.OnBudget,
                 Balance = a.Transactions.Sum(t => t.Amount),
             })
-            .FirstOrDefaultAsync(a => a.Id == id);
+            .FirstOrDefaultAsync(a => a.Id == id, cancellationToken);
 
         return result is not null
             ? Results.Ok(result)
             : Results.NotFound();
     }
 
-    public async Task<IResult> CreateAccountAsync(CreateAccountRequest request)
+    public async Task<IResult> CreateAccountAsync(CreateAccountRequest request, CancellationToken cancellationToken)
     {
-        var validationResult = await this.createValidator.ValidateAsync(request);
+        var validationResult = await this.createValidator.ValidateAsync(request, cancellationToken);
 
         if (!validationResult.IsValid)
         {
             return Results.ValidationProblem(validationResult.ToDictionary());
         }
 
-        using var dbTransaction = await this.context.Database.BeginTransactionAsync();
+        using var dbTransaction = await this.context.Database.BeginTransactionAsync(cancellationToken);
 
         var account = new Account
         {
@@ -76,7 +76,7 @@ public class AccountService
         };
 
         this.context.Accounts.Add(account);
-        await this.context.SaveChangesAsync();
+        await this.context.SaveChangesAsync(cancellationToken);
 
         var balance = new Transaction
         {
@@ -93,9 +93,9 @@ public class AccountService
         };
 
         this.context.Transactions.Add(balance);
-        await this.context.SaveChangesAsync();
+        await this.context.SaveChangesAsync(cancellationToken);
 
-        await dbTransaction.CommitAsync();
+        await dbTransaction.CommitAsync(cancellationToken);
 
         return Results.Created(
             this.linkGenerator.GetPathByName(Operations.Accounts.GetDetails, new() { ["id"] = account.Id, })
@@ -103,16 +103,16 @@ public class AccountService
             account);
     }
 
-    public async Task<IResult> UpdateAccountAsync(int id, UpdateAccountRequest request)
+    public async Task<IResult> UpdateAccountAsync(int id, UpdateAccountRequest request, CancellationToken cancellationToken)
     {
-        var account = await this.context.Accounts.FindAsync(id);
+        var account = await this.context.Accounts.FindAsync(new object[] { id, }, cancellationToken);
 
         if (account is null)
         {
             return Results.NotFound();
         }
 
-        var validationResult = await this.updateValidator.ValidateAsync(request);
+        var validationResult = await this.updateValidator.ValidateAsync(request, cancellationToken);
 
         if (!validationResult.IsValid)
         {
@@ -121,14 +121,14 @@ public class AccountService
 
         account.Name = request.Name;
 
-        await this.context.SaveChangesAsync();
+        await this.context.SaveChangesAsync(cancellationToken);
 
         return Results.Ok(account);
     }
 
-    public async Task<IResult> DeleteAccountAsync(int id)
+    public async Task<IResult> DeleteAccountAsync(int id, CancellationToken cancellationToken)
     {
-        var account = await this.context.Accounts.FindAsync(id);
+        var account = await this.context.Accounts.FindAsync(new object[] { id, }, cancellationToken);
 
         if (account is null)
         {
@@ -137,7 +137,7 @@ public class AccountService
 
         this.context.Accounts.Remove(account);
 
-        await this.context.SaveChangesAsync();
+        await this.context.SaveChangesAsync(cancellationToken);
 
         return Results.Ok();
     }

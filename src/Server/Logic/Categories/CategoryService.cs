@@ -24,7 +24,7 @@ public class CategoryService
         this.updateValidator = updateValidator;
     }
 
-    public async Task<CategoryListItem[]> GetCategoriesAsync()
+    public async Task<CategoryListItem[]> GetCategoriesAsync(CancellationToken cancellationToken)
     {
         return await this.context.Categories
             .AsNoTracking()
@@ -33,25 +33,24 @@ public class CategoryService
                 Id = a.Id,
                 Name = a.Name,
             })
-            .ToArrayAsync();
+            .ToArrayAsync(cancellationToken);
     }
 
-    public async Task<IResult> GetCategoryAsync(int id)
+    public async Task<IResult> GetCategoryAsync(int id, CancellationToken cancellationToken)
     {
         var result = await this.context.Categories
             .AsNoTracking()
-            .Where(a => a.Id == id)
             .Select(a => new CategoryDetails { Id = a.Id, Name = a.Name, })
-            .FirstOrDefaultAsync();
+            .FirstOrDefaultAsync(a => a.Id == id, cancellationToken);
 
         return result is not null
             ? Results.Ok(result)
             : Results.NotFound();
     }
 
-    public async Task<IResult> CreateCategoryAsync(CreateCategoryRequest request)
+    public async Task<IResult> CreateCategoryAsync(CreateCategoryRequest request, CancellationToken cancellationToken)
     {
-        var validationResult = await this.createValidator.ValidateAsync(request);
+        var validationResult = await this.createValidator.ValidateAsync(request, cancellationToken);
 
         if (!validationResult.IsValid)
         {
@@ -65,7 +64,7 @@ public class CategoryService
 
         this.context.Categories.Add(category);
 
-        await this.context.SaveChangesAsync();
+        await this.context.SaveChangesAsync(cancellationToken);
 
         return Results.Created(
             this.linkGenerator.GetPathByName(Operations.Categories.GetDetails, new() { ["id"] = category.Id, })
@@ -73,16 +72,16 @@ public class CategoryService
             category);
     }
 
-    public async Task<IResult> UpdateCategoryAsync(int id, UpdateCategoryRequest request)
+    public async Task<IResult> UpdateCategoryAsync(int id, UpdateCategoryRequest request, CancellationToken cancellationToken)
     {
-        var category = await this.context.Categories.FindAsync(id);
+        var category = await this.context.Categories.FindAsync(new object[] { id, }, cancellationToken);
 
         if (category is null)
         {
             return Results.NotFound();
         }
 
-        var validationResult = await this.updateValidator.ValidateAsync(request);
+        var validationResult = await this.updateValidator.ValidateAsync(request, cancellationToken);
 
         if (!validationResult.IsValid)
         {
@@ -91,14 +90,14 @@ public class CategoryService
 
         category.Name = request.Name;
 
-        await this.context.SaveChangesAsync();
+        await this.context.SaveChangesAsync(cancellationToken);
 
         return Results.Ok(category);
     }
 
-    public async Task<IResult> DeleteCategoryAsync(int id)
+    public async Task<IResult> DeleteCategoryAsync(int id, CancellationToken cancellationToken)
     {
-        var category = await this.context.Categories.FindAsync(id);
+        var category = await this.context.Categories.FindAsync(new object[] { id, }, cancellationToken: cancellationToken);
 
         if (category is null)
         {
@@ -106,7 +105,7 @@ public class CategoryService
         }
 
         this.context.Categories.Remove(category);
-        await this.context.SaveChangesAsync();
+        await this.context.SaveChangesAsync(cancellationToken);
 
         return Results.Ok();
     }

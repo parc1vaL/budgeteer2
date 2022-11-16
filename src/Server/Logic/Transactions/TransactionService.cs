@@ -25,7 +25,7 @@ public class TransactionService
         this.updateValidator = updateValidator;
     }
 
-    public async Task<TransactionListItem[]> GetTransactionsAsync()
+    public async Task<TransactionListItem[]> GetTransactionsAsync(CancellationToken cancellationToken)
     {
         return await this.context.Transactions
             .AsNoTracking()
@@ -45,14 +45,13 @@ public class TransactionService
             })
             .OrderByDescending(t => t.Date)
             .ThenBy(t => t.Id)
-            .ToArrayAsync();
+            .ToArrayAsync(cancellationToken);
     }
 
-    public async Task<IResult> GetTransactionAsync(int id)
+    public async Task<IResult> GetTransactionAsync(int id, CancellationToken cancellationToken)
     {
         var result = await this.context.Transactions
             .AsNoTracking()
-            .Where(t => t.Id == id)
             .Select(t => new TransactionDetails 
             {
                 Id = t.Id,
@@ -67,16 +66,16 @@ public class TransactionService
                 IncomeType = t.IncomeType,
                 Amount = t.Amount,
             })
-            .FirstOrDefaultAsync();
+            .FirstOrDefaultAsync(t => t.Id == id, cancellationToken);
 
         return result is not null
             ? Results.Ok(result)
             : Results.NotFound();
     }
 
-    public async Task<IResult> CreateTransactionAsync(CreateTransactionRequest request)
+    public async Task<IResult> CreateTransactionAsync(CreateTransactionRequest request, CancellationToken cancellationToken)
     {
-        var validationResult = await this.createValidator.ValidateAsync(request);
+        var validationResult = await this.createValidator.ValidateAsync(request, cancellationToken);
 
         if (!validationResult.IsValid)
         {
@@ -84,11 +83,11 @@ public class TransactionService
         }
 
         return request.TransactionType == TransactionType.External
-            ? await CreateExternalTransactionAsync(request)
-            : await CreateInternalTransactionAsync(request);        
+            ? await CreateExternalTransactionAsync(request, cancellationToken)
+            : await CreateInternalTransactionAsync(request, cancellationToken);        
     }
 
-    private async Task<IResult> CreateExternalTransactionAsync(CreateTransactionRequest request)
+    private async Task<IResult> CreateExternalTransactionAsync(CreateTransactionRequest request, CancellationToken cancellationToken)
     {
         var transaction = new Transaction
         {
@@ -105,7 +104,7 @@ public class TransactionService
         };
 
         this.context.Transactions.Add(transaction);
-        await this.context.SaveChangesAsync();
+        await this.context.SaveChangesAsync(cancellationToken);
 
         return Results.Created(
             this.linkGenerator.GetPathByName(Operations.Transactions.GetDetails, new() { ["id"] = transaction.Id, })
@@ -113,7 +112,7 @@ public class TransactionService
             transaction);
     }
 
-    private async Task<IResult> CreateInternalTransactionAsync(CreateTransactionRequest request)
+    private async Task<IResult> CreateInternalTransactionAsync(CreateTransactionRequest request, CancellationToken cancellationToken)
     {
         if (!request.TransferAccountId.HasValue)
         {
@@ -125,9 +124,9 @@ public class TransactionService
         var accountOnBudget = await this.context.Accounts
             .Where(a => a.Id == request.AccountId)
             .Select(a => a.OnBudget)
-            .FirstOrDefaultAsync();
+            .FirstOrDefaultAsync(cancellationToken);
 
-        using var dbTransaction = await this.context.Database.BeginTransactionAsync();
+        using var dbTransaction = await this.context.Database.BeginTransactionAsync(cancellationToken);
 
         var transaction = new Transaction
         {
@@ -144,7 +143,7 @@ public class TransactionService
         };
 
         this.context.Transactions.Add(transaction);
-        await this.context.SaveChangesAsync();
+        await this.context.SaveChangesAsync(cancellationToken);
 
         var transfer = new Transaction
         {
@@ -161,12 +160,12 @@ public class TransactionService
         };
 
         this.context.Transactions.Add(transfer);
-        await this.context.SaveChangesAsync();
+        await this.context.SaveChangesAsync(cancellationToken);
 
         transaction.TransferTransactionId = transfer.Id;
-        await this.context.SaveChangesAsync();
+        await this.context.SaveChangesAsync(cancellationToken);
 
-        await dbTransaction.CommitAsync();
+        await dbTransaction.CommitAsync(cancellationToken);
 
         return Results.Created(
             this.linkGenerator.GetPathByName(Operations.Transactions.GetDetails, new() { ["id"] = transaction.Id, })
@@ -174,16 +173,16 @@ public class TransactionService
             transaction);
     }
 
-    public async Task<IResult> UpdateTransactionAsync(int id, UpdateTransactionRequest request)
+    public async Task<IResult> UpdateTransactionAsync(int id, UpdateTransactionRequest request, CancellationToken cancellationToken)
     {
-        var transaction = await this.context.Transactions.FindAsync(id);
+        var transaction = await this.context.Transactions.FindAsync(new object[] { id, }, cancellationToken);
 
         if (transaction is null)
         {
             return Results.NotFound();
         }
 
-        var validationResult = await this.updateValidator.ValidateAsync(request);
+        var validationResult = await this.updateValidator.ValidateAsync(request, cancellationToken);
 
         if (!validationResult.IsValid)
         {
@@ -199,7 +198,7 @@ public class TransactionService
                     + "'Transfer' but not transfer transaction ID set.");
             }
 
-            var transfer = await this.context.Transactions.FindAsync(transaction.TransferTransactionId.Value);
+            var transfer = await this.context.Transactions.FindAsync(new object[] { transaction.TransferTransactionId.Value, }, cancellationToken);
 
             if (transfer is null)
             {
@@ -211,22 +210,22 @@ public class TransactionService
 
             if (request.TransactionType == TransactionType.Internal)
             {
-                return await UpdateInternalToInternalAsync(transaction, transfer, request);
+                return await UpdateInternalToInternalAsync(transaction, transfer, request, cancellationToken);
             }
             else
             {
-                return await UpdateInternalToExternalAsync(transaction, transfer, request);
+                return await UpdateInternalToExternalAsync(transaction, transfer, request, cancellationToken);
             }
         }
         else
         {
             if (request.TransactionType == TransactionType.Internal)
             {
-                return await UpdateExternalToInternalAsync(transaction, request);
+                return await UpdateExternalToInternalAsync(transaction, request, cancellationToken);
             }
             else
             {
-                return await UpdateExternalToExternalAsync(transaction, request);
+                return await UpdateExternalToExternalAsync(transaction, request, cancellationToken);
             }
         }
     }
@@ -234,7 +233,8 @@ public class TransactionService
     private async Task<IResult> UpdateInternalToInternalAsync(
         Transaction transaction, 
         Transaction transfer, 
-        UpdateTransactionRequest request)
+        UpdateTransactionRequest request, 
+        CancellationToken cancellationToken)
     {
         if (!request.TransferAccountId.HasValue)
         {
@@ -247,7 +247,7 @@ public class TransactionService
         var accountOnBudget = await this.context.Accounts
             .Where(a => a.Id == request.AccountId)
             .Select(a => a.OnBudget)
-            .FirstOrDefaultAsync();
+            .FirstOrDefaultAsync(cancellationToken);
 
         // unchanged:
         transaction.TransactionType = TransactionType.Internal;
@@ -275,7 +275,7 @@ public class TransactionService
         transfer.Date = request.Date;
         transfer.Amount = -1.0M * request.Amount;
 
-        await this.context.SaveChangesAsync();
+        await this.context.SaveChangesAsync(cancellationToken);
 
         return Results.Ok();
     }
@@ -283,9 +283,10 @@ public class TransactionService
     private async Task<IResult> UpdateInternalToExternalAsync(
         Transaction transaction, 
         Transaction transfer, 
-        UpdateTransactionRequest request)
+        UpdateTransactionRequest request, 
+        CancellationToken cancellationToken)
     {
-        using var dbTransaction = await this.context.Database.BeginTransactionAsync();
+        using var dbTransaction = await this.context.Database.BeginTransactionAsync(cancellationToken);
 
         // reset transfer properties
         transaction.TransactionType = TransactionType.External;
@@ -301,19 +302,20 @@ public class TransactionService
         transaction.IsCleared = request.IsCleared;
         transaction.Payee = request.Payee;
 
-        await this.context.SaveChangesAsync();
+        await this.context.SaveChangesAsync(cancellationToken);
 
         this.context.Transactions.Remove(transfer);
-        await this.context.SaveChangesAsync();
+        await this.context.SaveChangesAsync(cancellationToken);
 
-        await dbTransaction.CommitAsync();
+        await dbTransaction.CommitAsync(cancellationToken);
 
         return Results.Ok();
     }
 
     private async Task<IResult> UpdateExternalToInternalAsync(
         Transaction transaction, 
-        UpdateTransactionRequest request)
+        UpdateTransactionRequest request, 
+        CancellationToken cancellationToken)
     {
         if (!request.TransferAccountId.HasValue)
         {
@@ -326,9 +328,9 @@ public class TransactionService
         var accountOnBudget = await this.context.Accounts
             .Where(a => a.Id == request.AccountId)
             .Select(a => a.OnBudget)
-            .FirstOrDefaultAsync();
+            .FirstOrDefaultAsync(cancellationToken);
 
-        using var dbTransaction = await this.context.Database.BeginTransactionAsync();
+        using var dbTransaction = await this.context.Database.BeginTransactionAsync(cancellationToken);
 
         // create new transfer
         var transfer = new Transaction
@@ -360,19 +362,20 @@ public class TransactionService
         transaction.IsCleared = request.IsCleared;
 
         this.context.Transactions.Add(transfer);
-        await this.context.SaveChangesAsync();
+        await this.context.SaveChangesAsync(cancellationToken);
 
         transaction.TransferTransactionId = transfer.Id;
 
-        await this.context.SaveChangesAsync();
-        await dbTransaction.CommitAsync();
+        await this.context.SaveChangesAsync(cancellationToken);
+        await dbTransaction.CommitAsync(cancellationToken);
 
         return Results.Ok();
     }
 
     private async Task<IResult> UpdateExternalToExternalAsync(
         Transaction transaction, 
-        UpdateTransactionRequest request)
+        UpdateTransactionRequest request, 
+        CancellationToken cancellationToken)
     {
         // ensure unset transfer properties
         transaction.TransactionType = TransactionType.External;
@@ -388,14 +391,14 @@ public class TransactionService
         transaction.IsCleared = request.IsCleared;
         transaction.Payee = request.Payee;
 
-        await this.context.SaveChangesAsync();
+        await this.context.SaveChangesAsync(cancellationToken);
 
         return Results.Ok();
     }
 
-    public async Task<IResult> DeleteTransactionAsync(int id)
+    public async Task<IResult> DeleteTransactionAsync(int id, CancellationToken cancellationToken)
     {
-        var transaction = await this.context.Transactions.FindAsync(id);
+        var transaction = await this.context.Transactions.FindAsync(new object[] { id, }, cancellationToken);
 
         if (transaction is null)
         {
@@ -404,7 +407,7 @@ public class TransactionService
 
         this.context.Transactions.Remove(transaction);
 
-        await this.context.SaveChangesAsync();
+        await this.context.SaveChangesAsync(cancellationToken);
 
         return Results.Ok();
     }

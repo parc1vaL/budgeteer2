@@ -9,4 +9,11 @@
   <ItemGroup>
     <SupportedPlatform Include="browser" />
   </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Accounts" />
+    <Folder Include="Budgets" />
+    <Folder Include="Categories" />
+    <Folder Include="Transactions" />
+  </ItemGroup>
 </Project>

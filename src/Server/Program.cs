@@ -1,14 +1,13 @@
-using Budgeteer.Server.Endpoints;
 using Budgeteer.Server;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
 using System.Reflection;
-using Budgeteer.Server.Logic.Accounts;
-using Budgeteer.Server.Logic.Transactions;
+using Budgeteer.Server.Features.Accounts;
+using Budgeteer.Server.Features.Budgets;
+using Budgeteer.Server.Features.Categories;
+using Budgeteer.Server.Features.Transactions;
 using Microsoft.OpenApi.Models;
-using Budgeteer.Server.Logic.Categories;
-using Budgeteer.Server.Logic.Budgets;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -25,7 +24,7 @@ builder.Services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
-    c.SwaggerDoc("v1", new() { Title = builder.Environment.ApplicationName, Version = "v1" });
+    c.SwaggerDoc("v1", new OpenApiInfo { Title = builder.Environment.ApplicationName, Version = "v1" });
 
     c.MapType<DateOnly>(() => new OpenApiSchema
     {
@@ -49,26 +48,21 @@ builder.Host.UseSerilog((ctx, lc) => lc.ReadFrom.Configuration(ctx.Configuration
 var app = builder.Build();
 
 app.UseSwagger();
-app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", $"{builder.Environment.ApplicationName} v1"));
+app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.yaml", $"{builder.Environment.ApplicationName} v1"));
 
 // Configure the HTTP request pipeline.
+app.UseRouting();
+
+app.UseSerilogRequestLogging();
+
 if (app.Environment.IsDevelopment())
 {
-    app.UseWebAssemblyDebugging();
+    app.UseDeveloperExceptionPage();
 }
 else
 {
-    app.UseExceptionHandler("/Error");
+    app.UseExceptionHandler(application => application.Run(context => Results.Problem().ExecuteAsync(context)));
 }
-
-app.UseBlazorFrameworkFiles();
-app.UseStaticFiles();
-
-app.UseRouting();
-
-app.MapRazorPages();
-
-app.UseSerilogRequestLogging();
 
 app.MapAccounts();
 app.MapCategories();
@@ -76,6 +70,5 @@ app.MapTransactions();
 app.MapBudgets();
 
 app.MapControllers();
-app.MapFallbackToFile("index.html");
 
 app.Run();

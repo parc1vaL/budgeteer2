@@ -22,10 +22,5 @@
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.4.0" />
   </ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\Client\Budgeteer.Client.csproj" />
-    <ProjectReference Include="..\Shared\Budgeteer.Shared.csproj" />
-  </ItemGroup>
-
 
 </Project>

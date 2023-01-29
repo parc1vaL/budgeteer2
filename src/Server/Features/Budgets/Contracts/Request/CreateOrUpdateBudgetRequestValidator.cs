@@ -3,11 +3,11 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Budgeteer.Server.Features.Budgets.Contracts.Request;
 
-public class CreateOrUpdateBudgetValidator : AbstractValidator<CreateOrUpdateBudgetRequest>
+public class CreateOrUpdateBudgetRequestValidator : AbstractValidator<CreateOrUpdateBudgetRequest>
 {
     private readonly BudgetContext context;
 
-    public CreateOrUpdateBudgetValidator(BudgetContext context)
+    public CreateOrUpdateBudgetRequestValidator(BudgetContext context)
     {
         this.context = context;
 

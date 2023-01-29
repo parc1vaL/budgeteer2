@@ -7,6 +7,7 @@ using Budgeteer.Server.Features.Accounts;
 using Budgeteer.Server.Features.Budgets;
 using Budgeteer.Server.Features.Categories;
 using Budgeteer.Server.Features.Transactions;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -39,6 +40,8 @@ builder.Services.AddRazorPages();
 builder.Services.AddDbContext<BudgetContext>(settings => 
 {
     settings
+        .EnableSensitiveDataLogging(builder.Environment.IsDevelopment())
+        .EnableDetailedErrors(builder.Environment.IsDevelopment())
         .UseNpgsql(builder.Configuration.GetConnectionString("Default"))
         .UseSnakeCaseNamingConvention();
 });

@@ -1,5 +1,4 @@
-﻿using System.Text.Json.Serialization;
-using Budgeteer.Server.Features.Budgets;
+﻿using Budgeteer.Server.Features.Budgets;
 using Budgeteer.Server.Features.Transactions;
 
 namespace Budgeteer.Server.Features.Categories;

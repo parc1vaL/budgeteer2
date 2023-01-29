@@ -27,7 +27,6 @@ public class CategoryService
     public async Task<CategoryListItem[]> GetCategoriesAsync(CancellationToken cancellationToken)
     {
         return await this.context.Categories
-            .AsNoTracking()
             .Select(a => new CategoryListItem
             {
                 Id = a.Id,
@@ -39,7 +38,6 @@ public class CategoryService
     public async Task<IResult> GetCategoryAsync(int id, CancellationToken cancellationToken)
     {
         var result = await this.context.Categories
-            .AsNoTracking()
             .Select(a => new CategoryDetails { Id = a.Id, Name = a.Name, })
             .FirstOrDefaultAsync(a => a.Id == id, cancellationToken);
 

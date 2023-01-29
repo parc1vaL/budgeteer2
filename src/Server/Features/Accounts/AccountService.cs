@@ -29,7 +29,6 @@ public class AccountService
     {
         return Results.Ok(
             await this.context.Accounts
-                .AsNoTracking()
                 .Select(a => new AccountListItem
                 {
                     Id = a.Id, Name = a.Name, OnBudget = a.OnBudget, Balance = a.Transactions.Sum(t => t.Amount),
@@ -40,7 +39,6 @@ public class AccountService
     public async Task<IResult> GetAccountAsync(int id, CancellationToken cancellationToken)
     {
         var result = await this.context.Accounts
-            .AsNoTracking()
             .Select(a => new AccountDetails
             {
                 Id = a.Id, Name = a.Name, OnBudget = a.OnBudget, Balance = a.Transactions.Sum(t => t.Amount),

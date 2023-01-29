@@ -33,7 +33,6 @@ public class BudgetService
 
         // Gets the budget items
         var items = await GetItemsQuery(request)
-            .AsNoTracking()
             .ToArrayAsync(cancellationToken)
             .ConfigureAwait(false);
 
@@ -50,7 +49,6 @@ public class BudgetService
                 || (t.Date < startDate
                     && t.Date >= prevDate
                     && t.IncomeType == IncomeType.NextMonth))
-            .AsNoTracking()
             .SumAsync(t => t.Amount, cancellationToken)
             .ConfigureAwait(false);
 
@@ -61,7 +59,6 @@ public class BudgetService
                  && t.IncomeType == IncomeType.CurrentMonth)
                 || (t.Date < prevDate
                     && t.IncomeType == IncomeType.NextMonth))
-            .AsNoTracking()
             .SumAsync(t => t.Amount, cancellationToken)
             .ConfigureAwait(false);
 

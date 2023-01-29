@@ -27,7 +27,6 @@ public class TransactionService
     public async Task<IResult> GetTransactionsAsync(CancellationToken cancellationToken)
     {
         var transactions = await this.context.Transactions
-            .AsNoTracking()
             .Select(t => new TransactionListItem
             {
                 Id = t.Id,
@@ -52,7 +51,6 @@ public class TransactionService
     public async Task<IResult> GetTransactionAsync(int id, CancellationToken cancellationToken)
     {
         var result = await this.context.Transactions
-            .AsNoTracking()
             .Select(t => new TransactionDetails 
             {
                 Id = t.Id,

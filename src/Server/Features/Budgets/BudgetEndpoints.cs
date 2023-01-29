@@ -26,7 +26,7 @@ public static class BudgetEndpoints
                 => service.CreateOrUpdateBudget(new CreateOrUpdateBudgetRequest { Year = year, Month = month, CategoryId = categoryId, Amount = amount, }, cancellationToken))
             .WithName(Operations.Budgets.CreateOrUpdate)
             .WithTags(GroupName)
-            .Produces<Budget>(StatusCodes.Status200OK, MediaTypeNames.Application.Json)
+            .Produces(StatusCodes.Status200OK)
             .ProducesValidationProblem(StatusCodes.Status400BadRequest, MediaTypeNames.Application.Json);
     }
 }

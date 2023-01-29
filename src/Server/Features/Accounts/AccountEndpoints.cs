@@ -24,13 +24,14 @@ public static class AccountEndpoints
         app.MapPost("/accounts", (CreateAccountRequest request, AccountService service, CancellationToken cancellationToken) => service.CreateAccountAsync(request, cancellationToken))
             .WithName(Operations.Accounts.Create)
             .WithTags(GroupName)
-            .Produces<Account>(StatusCodes.Status201Created, MediaTypeNames.Application.Json)
+            .Produces(StatusCodes.Status201Created)
             .ProducesValidationProblem(StatusCodes.Status400BadRequest, MediaTypeNames.Application.Json);
 
         app.MapPut("/accounts/{id:int}", (int id, UpdateAccountRequest request, AccountService service, CancellationToken cancellationToken) => service.UpdateAccountAsync(id, request, cancellationToken))
             .WithName(Operations.Accounts.Update)
             .WithTags(GroupName)
-            .Produces<Account>(StatusCodes.Status200OK, MediaTypeNames.Application.Json)
+            .Produces(StatusCodes.Status200OK)
+            .ProducesValidationProblem(StatusCodes.Status400BadRequest, MediaTypeNames.Application.Json)
             .Produces(StatusCodes.Status404NotFound);
 
         app.MapDelete("/accounts/{id:int}", (int id, AccountService service, CancellationToken cancellationToken) => service.DeleteAccountAsync(id, cancellationToken))

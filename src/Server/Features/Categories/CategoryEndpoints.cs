@@ -1,5 +1,4 @@
 using System.Net.Mime;
-using Budgeteer.Server.Features.Accounts;
 using Budgeteer.Server.Features.Categories.Contracts.Request;
 using Budgeteer.Server.Features.Categories.Contracts.Response;
 
@@ -24,13 +23,14 @@ public static class CategoryEndpoints
         app.MapPost("/categories", (CreateCategoryRequest request, CategoryService service, CancellationToken cancellationToken) => service.CreateCategoryAsync(request, cancellationToken))
             .WithName(Operations.Categories.Create)
             .WithTags(GroupName)
-            .Produces<Account>(StatusCodes.Status201Created, MediaTypeNames.Application.Json)
+            .Produces(StatusCodes.Status201Created)
             .ProducesValidationProblem(StatusCodes.Status400BadRequest, MediaTypeNames.Application.Json);
 
         app.MapPut("/categories/{id:int}", (int id, UpdateCategoryRequest request, CategoryService service, CancellationToken cancellationToken) => service.UpdateCategoryAsync(id, request, cancellationToken))
             .WithName(Operations.Categories.Update)
             .WithTags(GroupName)
-            .Produces<Account>(StatusCodes.Status200OK, MediaTypeNames.Application.Json)
+            .Produces(StatusCodes.Status200OK)
+            .ProducesValidationProblem(StatusCodes.Status400BadRequest, MediaTypeNames.Application.Json)
             .Produces(StatusCodes.Status404NotFound);
 
         app.MapDelete("/categories/{id:int}", (int id, CategoryService service, CancellationToken cancellationToken) => service.DeleteCategoryAsync(id, cancellationToken))

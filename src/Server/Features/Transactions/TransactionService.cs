@@ -126,7 +126,7 @@ public class TransactionService
             .Select(a => a.OnBudget)
             .FirstOrDefaultAsync(cancellationToken);
 
-        using var dbTransaction = await this.context.Database.BeginTransactionAsync(cancellationToken);
+        await using var dbTransaction = await this.context.Database.BeginTransactionAsync(cancellationToken);
 
         var transaction = new Transaction
         {
@@ -285,7 +285,7 @@ public class TransactionService
         UpdateTransactionRequest request, 
         CancellationToken cancellationToken)
     {
-        using var dbTransaction = await this.context.Database.BeginTransactionAsync(cancellationToken);
+        await using var dbTransaction = await this.context.Database.BeginTransactionAsync(cancellationToken);
 
         // reset transfer properties
         transaction.TransactionType = TransactionType.External;
@@ -329,7 +329,7 @@ public class TransactionService
             .Select(a => a.OnBudget)
             .FirstOrDefaultAsync(cancellationToken);
 
-        using var dbTransaction = await this.context.Database.BeginTransactionAsync(cancellationToken);
+        await using var dbTransaction = await this.context.Database.BeginTransactionAsync(cancellationToken);
 
         // create new transfer
         var transfer = new Transaction

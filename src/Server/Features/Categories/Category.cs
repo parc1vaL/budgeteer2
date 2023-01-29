@@ -10,11 +10,9 @@ public class Category
 
     public string Name { get; set; } = string.Empty;
 
-    [JsonIgnore]
     public ICollection<Transaction> Transactions { get; } =
         new List<Transaction>();
 
-    [JsonIgnore]
     public ICollection<Budget> Budgets { get; } =
         new List<Budget>();
 }

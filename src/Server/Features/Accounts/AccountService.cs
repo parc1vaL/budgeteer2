@@ -32,10 +32,7 @@ public class AccountService
                 .AsNoTracking()
                 .Select(a => new AccountListItem
                 {
-                    Id = a.Id,
-                    Name = a.Name,
-                    OnBudget = a.OnBudget,
-                    Balance = a.Transactions.Sum(t => t.Amount),
+                    Id = a.Id, Name = a.Name, OnBudget = a.OnBudget, Balance = a.Transactions.Sum(t => t.Amount),
                 })
                 .ToArrayAsync(cancellationToken));
     }
@@ -44,12 +41,9 @@ public class AccountService
     {
         var result = await this.context.Accounts
             .AsNoTracking()
-            .Select(a => new AccountDetails 
-            { 
-                Id = a.Id, 
-                Name = a.Name, 
-                OnBudget = a.OnBudget,
-                Balance = a.Transactions.Sum(t => t.Amount),
+            .Select(a => new AccountDetails
+            {
+                Id = a.Id, Name = a.Name, OnBudget = a.OnBudget, Balance = a.Transactions.Sum(t => t.Amount),
             })
             .FirstOrDefaultAsync(a => a.Id == id, cancellationToken);
 
@@ -67,13 +61,9 @@ public class AccountService
             return Results.ValidationProblem(validationResult.ToDictionary());
         }
 
-        using var dbTransaction = await this.context.Database.BeginTransactionAsync(cancellationToken);
+        await using var dbTransaction = await this.context.Database.BeginTransactionAsync(cancellationToken);
 
-        var account = new Account
-        {
-            Name = request.Name,
-            OnBudget = request.OnBudget,
-        };
+        var account = new Account { Name = request.Name, OnBudget = request.OnBudget, };
 
         this.context.Accounts.Add(account);
         await this.context.SaveChangesAsync(cancellationToken);
@@ -97,13 +87,13 @@ public class AccountService
 
         await dbTransaction.CommitAsync(cancellationToken);
 
-        return Results.Created(
+        return TypedResults.Created(
             this.linkGenerator.GetPathByName(Operations.Accounts.GetDetails, new() { ["id"] = account.Id, })
-                ?? throw new InvalidOperationException("Resource path could not be generated."),
-            account);
+            ?? throw new InvalidOperationException("Resource path could not be generated."));
     }
 
-    public async Task<IResult> UpdateAccountAsync(int id, UpdateAccountRequest request, CancellationToken cancellationToken)
+    public async Task<IResult> UpdateAccountAsync(int id, UpdateAccountRequest request,
+        CancellationToken cancellationToken)
     {
         var account = await this.context.Accounts.FindAsync(new object[] { id, }, cancellationToken);
 
@@ -123,7 +113,7 @@ public class AccountService
 
         await this.context.SaveChangesAsync(cancellationToken);
 
-        return Results.Ok(account);
+        return Results.Ok();
     }
 
     public async Task<IResult> DeleteAccountAsync(int id, CancellationToken cancellationToken)

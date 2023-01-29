@@ -11,7 +11,6 @@ public class Account
 
     public required bool OnBudget { get; set; }
 
-    [JsonIgnore]
     public ICollection<Transaction> Transactions { get; } =
         new List<Transaction>();
 }

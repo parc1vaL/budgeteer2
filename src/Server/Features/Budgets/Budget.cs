@@ -7,7 +7,6 @@ public class Budget
 {
     public required int CategoryId { get; set; }
 
-    [JsonIgnore]
     public Category Category { get; set; } = null!;
 
     public required DateOnly Month { get; set; }

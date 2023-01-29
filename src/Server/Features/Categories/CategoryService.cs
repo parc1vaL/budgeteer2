@@ -66,10 +66,9 @@ public class CategoryService
 
         await this.context.SaveChangesAsync(cancellationToken);
 
-        return Results.Created(
+        return TypedResults.Created(
             this.linkGenerator.GetPathByName(Operations.Categories.GetDetails, new() { ["id"] = category.Id, })
-                ?? throw new InvalidOperationException("Resource path could not be generated."),
-            category);
+                ?? throw new InvalidOperationException("Resource path could not be generated."));
     }
 
     public async Task<IResult> UpdateCategoryAsync(int id, UpdateCategoryRequest request, CancellationToken cancellationToken)
@@ -92,7 +91,7 @@ public class CategoryService
 
         await this.context.SaveChangesAsync(cancellationToken);
 
-        return Results.Ok(category);
+        return Results.Ok();
     }
 
     public async Task<IResult> DeleteCategoryAsync(int id, CancellationToken cancellationToken)

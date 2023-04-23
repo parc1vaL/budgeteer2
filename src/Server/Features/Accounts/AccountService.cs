@@ -31,7 +31,10 @@ public class AccountService
             await this.context.Accounts
                 .Select(a => new AccountListItem
                 {
-                    Id = a.Id, Name = a.Name, OnBudget = a.OnBudget, Balance = a.Transactions.Sum(t => t.Amount),
+                    Id = a.Id, 
+                    Name = a.Name, 
+                    OnBudget = a.OnBudget, 
+                    Balance = a.Transactions.Sum(t => t.Amount),
                 })
                 .ToArrayAsync(cancellationToken));
     }
@@ -41,7 +44,10 @@ public class AccountService
         var result = await this.context.Accounts
             .Select(a => new AccountDetails
             {
-                Id = a.Id, Name = a.Name, OnBudget = a.OnBudget, Balance = a.Transactions.Sum(t => t.Amount),
+                Id = a.Id, 
+                Name = a.Name, 
+                OnBudget = a.OnBudget, 
+                Balance = a.Transactions.Sum(t => t.Amount),
             })
             .FirstOrDefaultAsync(a => a.Id == id, cancellationToken);
 

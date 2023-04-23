@@ -22,7 +22,7 @@ public static class TransactionEndpoints
                 (int id, TransactionService service, CancellationToken cancellationToken) => service.GetTransactionAsync(id, cancellationToken))
             .WithName(Operations.Transactions.GetDetails)
             .WithTags(GroupName)
-            .Produces<TransactionListItem>(StatusCodes.Status200OK, MediaTypeNames.Application.Json)
+            .Produces<TransactionDetails>(StatusCodes.Status200OK, MediaTypeNames.Application.Json)
             .Produces(StatusCodes.Status404NotFound);
 
         application

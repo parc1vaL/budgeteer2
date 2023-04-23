@@ -18,7 +18,7 @@ public static class AccountEndpoints
         app.MapGet("/accounts/{id:int}", (int id, AccountService service, CancellationToken cancellationToken) => service.GetAccountAsync(id, cancellationToken))
             .WithName(Operations.Accounts.GetDetails)
             .WithTags(GroupName)
-            .Produces<AccountListItem>(StatusCodes.Status200OK, MediaTypeNames.Application.Json)
+            .Produces<AccountDetails>(StatusCodes.Status200OK, MediaTypeNames.Application.Json)
             .Produces(StatusCodes.Status404NotFound);
 
         app.MapPost("/accounts", (CreateAccountRequest request, AccountService service, CancellationToken cancellationToken) => service.CreateAccountAsync(request, cancellationToken))

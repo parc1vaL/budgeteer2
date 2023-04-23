@@ -45,7 +45,7 @@ public class TransactionService
             .ThenBy(t => t.Id)
             .ToArrayAsync(cancellationToken);
 
-        return Results.Ok(transactions);
+        return TypedResults.Ok(transactions);
     }
 
     public async Task<IResult> GetTransactionAsync(int id, CancellationToken cancellationToken)
@@ -68,8 +68,8 @@ public class TransactionService
             .FirstOrDefaultAsync(t => t.Id == id, cancellationToken);
 
         return result is not null
-            ? Results.Ok(result)
-            : Results.NotFound();
+            ? TypedResults.Ok(result)
+            : TypedResults.NotFound();
     }
 
     public async Task<IResult> CreateTransactionAsync(CreateTransactionRequest request, CancellationToken cancellationToken)
@@ -78,7 +78,7 @@ public class TransactionService
 
         if (!validationResult.IsValid)
         {
-            return Results.ValidationProblem(validationResult.ToDictionary());
+            return TypedResults.ValidationProblem(validationResult.ToDictionary());
         }
 
         return request.TransactionType == TransactionType.External
@@ -176,14 +176,14 @@ public class TransactionService
 
         if (transaction is null)
         {
-            return Results.NotFound();
+            return TypedResults.NotFound();
         }
 
         var validationResult = await this.updateValidator.ValidateAsync(request, cancellationToken);
 
         if (!validationResult.IsValid)
         {
-            return Results.ValidationProblem(validationResult.ToDictionary());
+            return TypedResults.ValidationProblem(validationResult.ToDictionary());
         }
 
         if (transaction.TransactionType == TransactionType.Internal)
@@ -274,7 +274,7 @@ public class TransactionService
 
         await this.context.SaveChangesAsync(cancellationToken);
 
-        return Results.Ok();
+        return TypedResults.Ok();
     }
 
     private async Task<IResult> UpdateInternalToExternalAsync(
@@ -306,7 +306,7 @@ public class TransactionService
 
         await dbTransaction.CommitAsync(cancellationToken);
 
-        return Results.Ok();
+        return TypedResults.Ok();
     }
 
     private async Task<IResult> UpdateExternalToInternalAsync(
@@ -366,7 +366,7 @@ public class TransactionService
         await this.context.SaveChangesAsync(cancellationToken);
         await dbTransaction.CommitAsync(cancellationToken);
 
-        return Results.Ok();
+        return TypedResults.Ok();
     }
 
     private async Task<IResult> UpdateExternalToExternalAsync(
@@ -390,7 +390,7 @@ public class TransactionService
 
         await this.context.SaveChangesAsync(cancellationToken);
 
-        return Results.Ok();
+        return TypedResults.Ok();
     }
 
     public async Task<IResult> DeleteTransactionAsync(int id, CancellationToken cancellationToken)
@@ -399,13 +399,13 @@ public class TransactionService
 
         if (transaction is null)
         {
-            return Results.NotFound();
+            return TypedResults.NotFound();
         }
 
         this.context.Transactions.Remove(transaction);
 
         await this.context.SaveChangesAsync(cancellationToken);
 
-        return Results.Ok();
+        return TypedResults.Ok();
     }
 }

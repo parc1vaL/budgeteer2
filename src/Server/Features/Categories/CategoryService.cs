@@ -24,15 +24,16 @@ public class CategoryService
         this.updateValidator = updateValidator;
     }
 
-    public async Task<CategoryListItem[]> GetCategoriesAsync(CancellationToken cancellationToken)
+    public async Task<IResult> GetCategoriesAsync(CancellationToken cancellationToken)
     {
-        return await this.context.Categories
-            .Select(a => new CategoryListItem
-            {
-                Id = a.Id,
-                Name = a.Name,
-            })
-            .ToArrayAsync(cancellationToken);
+        return TypedResults.Ok(
+            await this.context.Categories
+                .Select(a => new CategoryListItem
+                {
+                    Id = a.Id,
+                    Name = a.Name,
+                })
+                .ToArrayAsync(cancellationToken));
     }
 
     public async Task<IResult> GetCategoryAsync(int id, CancellationToken cancellationToken)
@@ -42,8 +43,8 @@ public class CategoryService
             .FirstOrDefaultAsync(a => a.Id == id, cancellationToken);
 
         return result is not null
-            ? Results.Ok(result)
-            : Results.NotFound();
+            ? TypedResults.Ok(result)
+            : TypedResults.NotFound();
     }
 
     public async Task<IResult> CreateCategoryAsync(CreateCategoryRequest request, CancellationToken cancellationToken)
@@ -52,7 +53,7 @@ public class CategoryService
 
         if (!validationResult.IsValid)
         {
-            return Results.ValidationProblem(validationResult.ToDictionary());
+            return TypedResults.ValidationProblem(validationResult.ToDictionary());
         }
 
         var category = new Category
@@ -75,21 +76,21 @@ public class CategoryService
 
         if (category is null)
         {
-            return Results.NotFound();
+            return TypedResults.NotFound();
         }
 
         var validationResult = await this.updateValidator.ValidateAsync(request, cancellationToken);
 
         if (!validationResult.IsValid)
         {
-            return Results.ValidationProblem(validationResult.ToDictionary());
+            return TypedResults.ValidationProblem(validationResult.ToDictionary());
         }
 
         category.Name = request.Name;
 
         await this.context.SaveChangesAsync(cancellationToken);
 
-        return Results.Ok();
+        return TypedResults.Ok();
     }
 
     public async Task<IResult> DeleteCategoryAsync(int id, CancellationToken cancellationToken)
@@ -98,12 +99,12 @@ public class CategoryService
 
         if (category is null)
         {
-            return Results.NotFound();
+            return TypedResults.NotFound();
         }
 
         this.context.Categories.Remove(category);
         await this.context.SaveChangesAsync(cancellationToken);
 
-        return Results.Ok();
+        return TypedResults.Ok();
     }
 }

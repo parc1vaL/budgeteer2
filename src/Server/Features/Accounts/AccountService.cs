@@ -27,7 +27,7 @@ public class AccountService
 
     public async Task<IResult> GetAccountsAsync(CancellationToken cancellationToken)
     {
-        return Results.Ok(
+        return TypedResults.Ok(
             await this.context.Accounts
                 .Select(a => new AccountListItem
                 {
@@ -46,8 +46,8 @@ public class AccountService
             .FirstOrDefaultAsync(a => a.Id == id, cancellationToken);
 
         return result is not null
-            ? Results.Ok(result)
-            : Results.NotFound();
+            ? TypedResults.Ok(result)
+            : TypedResults.NotFound();
     }
 
     public async Task<IResult> CreateAccountAsync(CreateAccountRequest request, CancellationToken cancellationToken)
@@ -56,7 +56,7 @@ public class AccountService
 
         if (!validationResult.IsValid)
         {
-            return Results.ValidationProblem(validationResult.ToDictionary());
+            return TypedResults.ValidationProblem(validationResult.ToDictionary());
         }
 
         await using var dbTransaction = await this.context.Database.BeginTransactionAsync(cancellationToken);
@@ -97,21 +97,21 @@ public class AccountService
 
         if (account is null)
         {
-            return Results.NotFound();
+            return TypedResults.NotFound();
         }
 
         var validationResult = await this.updateValidator.ValidateAsync(request, cancellationToken);
 
         if (!validationResult.IsValid)
         {
-            return Results.ValidationProblem(validationResult.ToDictionary());
+            return TypedResults.ValidationProblem(validationResult.ToDictionary());
         }
 
         account.Name = request.Name;
 
         await this.context.SaveChangesAsync(cancellationToken);
 
-        return Results.Ok();
+        return TypedResults.Ok();
     }
 
     public async Task<IResult> DeleteAccountAsync(int id, CancellationToken cancellationToken)
@@ -120,13 +120,13 @@ public class AccountService
 
         if (account is null)
         {
-            return Results.NotFound();
+            return TypedResults.NotFound();
         }
 
         this.context.Accounts.Remove(account);
 
         await this.context.SaveChangesAsync(cancellationToken);
 
-        return Results.Ok();
+        return TypedResults.Ok();
     }
 }

@@ -28,7 +28,7 @@ public class BudgetService
 
         if (!validationResult.IsValid)
         {
-            return Results.ValidationProblem(validationResult.ToDictionary());
+            return TypedResults.ValidationProblem(validationResult.ToDictionary());
         }
 
         // Gets the budget items
@@ -68,7 +68,7 @@ public class BudgetService
             .SumAsync(b => b.Amount, cancellationToken)
             .ConfigureAwait(false);
 
-        return Results.Ok(
+        return TypedResults.Ok(
             new BudgetMonth
             {
                 Income = income,
@@ -84,7 +84,7 @@ public class BudgetService
 
         if (!validationResult.IsValid)
         {
-            return Results.ValidationProblem(validationResult.ToDictionary());
+            return TypedResults.ValidationProblem(validationResult.ToDictionary());
         }
 
         var budget = await this.context.Budgets
@@ -111,7 +111,7 @@ public class BudgetService
 
         await this.context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
-        return Results.Ok();
+        return TypedResults.Ok();
     }
 
     private IQueryable<BudgetMonthItem> GetItemsQuery(GetBudgetRequest request)

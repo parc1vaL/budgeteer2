@@ -99,7 +99,7 @@ public class AccountService
     public async Task<IResult> UpdateAccountAsync(int id, UpdateAccountRequest request,
         CancellationToken cancellationToken)
     {
-        var account = await this.context.Accounts.FindAsync(new object[] { id, }, cancellationToken);
+        var account = await this.context.Accounts.FirstOrDefaultAsync(item => item.Id == id, cancellationToken);
 
         if (account is null)
         {
@@ -122,7 +122,7 @@ public class AccountService
 
     public async Task<IResult> DeleteAccountAsync(int id, CancellationToken cancellationToken)
     {
-        var account = await this.context.Accounts.FindAsync(new object[] { id, }, cancellationToken);
+        var account = await this.context.Accounts.FirstOrDefaultAsync(item => item.Id == id, cancellationToken);
 
         if (account is null)
         {

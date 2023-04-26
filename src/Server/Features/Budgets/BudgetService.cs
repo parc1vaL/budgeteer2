@@ -32,9 +32,7 @@ public class BudgetService
         }
 
         // Gets the budget items
-        var items = await GetItemsQuery(request)
-            .ToArrayAsync(cancellationToken)
-            .ConfigureAwait(false);
+        var items = await GetItemsQuery(request).ToArrayAsync(cancellationToken);
 
         var startDate = new DateOnly(request.Year, request.Month, 1);
         var prevDate = startDate.AddMonths(-1);
@@ -49,8 +47,7 @@ public class BudgetService
                 || (t.Date < startDate
                     && t.Date >= prevDate
                     && t.IncomeType == IncomeType.NextMonth))
-            .SumAsync(t => t.Amount, cancellationToken)
-            .ConfigureAwait(false);
+            .SumAsync(t => t.Amount, cancellationToken);
 
         // Gets the total income in on-budget accounts prior to the request month
         var incomePrevious = await this.context.Transactions
@@ -59,14 +56,12 @@ public class BudgetService
                  && t.IncomeType == IncomeType.CurrentMonth)
                 || (t.Date < prevDate
                     && t.IncomeType == IncomeType.NextMonth))
-            .SumAsync(t => t.Amount, cancellationToken)
-            .ConfigureAwait(false);
+            .SumAsync(t => t.Amount, cancellationToken);
 
         // Gets the total budget amount over all categories prior to the request month
         var budgetPrevious = await this.context.Budgets
             .Where(b => b.Month < startDate)
-            .SumAsync(b => b.Amount, cancellationToken)
-            .ConfigureAwait(false);
+            .SumAsync(b => b.Amount, cancellationToken);
 
         return TypedResults.Ok(
             new BudgetMonth
@@ -90,8 +85,7 @@ public class BudgetService
         var budget = await this.context.Budgets
             .FirstOrDefaultAsync(
                 b => b.CategoryId == request.CategoryId && b.Month == new DateOnly(request.Year, request.Month, 1),
-                cancellationToken)
-            .ConfigureAwait(false);
+                cancellationToken);
 
         if (budget is null)
         {
@@ -109,7 +103,7 @@ public class BudgetService
             budget.Amount = request.Amount;
         }
 
-        await this.context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        await this.context.SaveChangesAsync(cancellationToken);
 
         return TypedResults.Ok();
     }

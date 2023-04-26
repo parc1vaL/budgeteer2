@@ -19,8 +19,6 @@ public class CreateCategoryRequestValidator : AbstractValidator<CreateCategoryRe
 
     private async Task<bool> HasUniqueName(string name, CancellationToken cancellationToken)
     {
-        return !await context.Categories
-            .AnyAsync(a => a.Name == name, cancellationToken)
-            .ConfigureAwait(false);
+        return !await context.Categories.AnyAsync(a => a.Name == name, cancellationToken);
     }
 }

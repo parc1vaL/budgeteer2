@@ -72,6 +72,4 @@ app.MapCategories();
 app.MapTransactions();
 app.MapBudgets();
 
-app.MapControllers();
-
 app.Run();

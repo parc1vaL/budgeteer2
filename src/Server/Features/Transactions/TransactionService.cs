@@ -172,7 +172,7 @@ public class TransactionService
 
     public async Task<IResult> UpdateTransactionAsync(int id, UpdateTransactionRequest request, CancellationToken cancellationToken)
     {
-        var transaction = await this.context.Transactions.FindAsync(new object[] { id, }, cancellationToken);
+        var transaction = await this.context.Transactions.FirstOrDefaultAsync(item => item.Id == id, cancellationToken);
 
         if (transaction is null)
         {
@@ -190,16 +190,16 @@ public class TransactionService
         {
             if (!transaction.TransferTransactionId.HasValue)
             {
-                throw new Exception(
+                throw new InvalidOperationException(
                     $"Transaction with ID {id} has transaction type "
-                    + "'Transfer' but not transfer transaction ID set.");
+                    + "'Transfer' but no transfer transaction ID set.");
             }
 
-            var transfer = await this.context.Transactions.FindAsync(new object[] { transaction.TransferTransactionId.Value, }, cancellationToken);
+            var transfer = await this.context.Transactions.FirstOrDefaultAsync(item => item.Id == transaction.TransferTransactionId.Value, cancellationToken);
 
             if (transfer is null)
             {
-                throw new Exception(
+                throw new InvalidOperationException(
                     $"Transaction with ID {id} has transaction type 'Transfer' "
                     + "but the transfer transaction with ID "
                     + $"{transaction.TransferTransactionId.Value} does not exist.");
@@ -395,7 +395,7 @@ public class TransactionService
 
     public async Task<IResult> DeleteTransactionAsync(int id, CancellationToken cancellationToken)
     {
-        var transaction = await this.context.Transactions.FindAsync(new object[] { id, }, cancellationToken);
+        var transaction = await this.context.Transactions.FirstOrDefaultAsync(item => item.Id == id, cancellationToken);
 
         if (transaction is null)
         {

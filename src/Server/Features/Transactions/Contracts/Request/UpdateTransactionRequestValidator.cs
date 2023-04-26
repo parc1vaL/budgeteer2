@@ -114,15 +114,11 @@ public class UpdateTransactionCommandValidator : AbstractValidator<UpdateTransac
 
     private async Task<bool> HasValidAccountId(int id, CancellationToken cancellationToken)
     {
-        return await context.Accounts
-            .AnyAsync(a => a.Id == id, cancellationToken)
-            .ConfigureAwait(false);
+        return await context.Accounts.AnyAsync(a => a.Id == id, cancellationToken);
     }
 
     private async Task<bool> HasValidCategoryId(int? id, CancellationToken cancellationToken)
     {
-        return await context.Categories
-            .AnyAsync(a => a.Id == id, cancellationToken)
-            .ConfigureAwait(false);
+        return await context.Categories.AnyAsync(a => a.Id == id, cancellationToken);
     }
 }

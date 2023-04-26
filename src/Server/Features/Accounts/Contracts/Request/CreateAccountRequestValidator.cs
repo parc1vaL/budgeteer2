@@ -16,11 +16,10 @@ public class CreateAccountRequestValidator : AbstractValidator<CreateAccountRequ
             .MaximumLength(200).WithMessage("Account name cannot exceed 200 characters.")
             .MustAsync(HasUniqueName).WithMessage("Account name already exists.");
     }
-
+    
     private async Task<bool> HasUniqueName(string name, CancellationToken cancellationToken)
     {
         return !await context.Accounts
-            .AnyAsync(a => a.Name == name, cancellationToken)
-            .ConfigureAwait(false);
+            .AnyAsync(a => a.Name == name, cancellationToken);
     }
 }

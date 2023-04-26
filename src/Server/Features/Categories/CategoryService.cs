@@ -72,7 +72,7 @@ public class CategoryService
 
     public async Task<IResult> UpdateCategoryAsync(int id, UpdateCategoryRequest request, CancellationToken cancellationToken)
     {
-        var category = await this.context.Categories.FindAsync(new object[] { id, }, cancellationToken);
+        var category = await this.context.Categories.FirstOrDefaultAsync(item => item.Id == id, cancellationToken);
 
         if (category is null)
         {
@@ -95,7 +95,7 @@ public class CategoryService
 
     public async Task<IResult> DeleteCategoryAsync(int id, CancellationToken cancellationToken)
     {
-        var category = await this.context.Categories.FindAsync(new object[] { id, }, cancellationToken: cancellationToken);
+        var category = await this.context.Categories.FirstOrDefaultAsync(item => item.Id == id, cancellationToken: cancellationToken);
 
         if (category is null)
         {

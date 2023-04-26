@@ -19,8 +19,6 @@ public class UpdateAccountRequestValidator : AbstractValidator<UpdateAccountRequ
 
     private async Task<bool> HasUniqueName(string name, CancellationToken cancellationToken)
     {
-        return !await context.Accounts
-            .AnyAsync(a => a.Name == name, cancellationToken)
-            .ConfigureAwait(false);
+        return !await context.Accounts.AnyAsync(a => a.Name == name, cancellationToken);
     }
 }

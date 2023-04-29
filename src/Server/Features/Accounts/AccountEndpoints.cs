@@ -1,6 +1,4 @@
 using System.Net.Mime;
-using Budgeteer.Server.Features.Accounts.Contracts.Request;
-using Budgeteer.Server.Features.Accounts.Contracts.Response;
 
 namespace Budgeteer.Server.Features.Accounts;
 
@@ -13,12 +11,12 @@ public static class AccountEndpoints
         app.MapGet("/accounts", (AccountService service, CancellationToken cancellationToken) => service.GetAccountsAsync(cancellationToken))
             .WithName(Operations.Accounts.GetList)
             .WithTags(GroupName)
-            .Produces<AccountListItem[]>(StatusCodes.Status200OK, MediaTypeNames.Application.Json);
+            .Produces<GetAccountResponse[]>(StatusCodes.Status200OK, MediaTypeNames.Application.Json);
 
         app.MapGet("/accounts/{id:int}", (int id, AccountService service, CancellationToken cancellationToken) => service.GetAccountAsync(id, cancellationToken))
             .WithName(Operations.Accounts.GetDetails)
             .WithTags(GroupName)
-            .Produces<AccountDetails>(StatusCodes.Status200OK, MediaTypeNames.Application.Json)
+            .Produces<GetAccountResponse>(StatusCodes.Status200OK, MediaTypeNames.Application.Json)
             .Produces(StatusCodes.Status404NotFound);
 
         app.MapPost("/accounts", (CreateAccountRequest request, AccountService service, CancellationToken cancellationToken) => service.CreateAccountAsync(request, cancellationToken))

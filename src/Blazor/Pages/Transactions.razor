@@ -1,0 +1,36 @@
+@page "/transactions"
+@using Budgeteer.Blazor.Models
+
+@if (this.transactions is null)
+{
+    <p>Loading...</p>
+}
+else
+{
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" Class="mb-4" OnClick="CreateTransaction">New Transaction</MudButton>
+
+    <MudDataGrid Items="@transactions" ColumnResizeMode="ResizeMode.Column" RowClick="@((DataGridRowClickEventArgs<Transaction> item) => OnRowClick(item))">
+        <Columns>
+            <PropertyColumn Property="x => x.Date" Title="Date" Format="d" />
+            <PropertyColumn Property="x => x.Account" Title="Account" />
+            <PropertyColumn Property="x => x.CategoryDisplay" Title="Category" />
+            <TemplateColumn Title="Payee" SortBy="x => x.PayeeDisplay">
+                <CellTemplate>
+                    <div class="flex items-center">
+                        @if (context.Item.Payee is null)
+                        {
+                            <MudIcon Class="me-2" Icon="@Icons.Material.Filled.CompareArrows"/>
+                        }
+                        <span>@context.Item.PayeeDisplay</span>
+                    </div>
+                </CellTemplate>
+            </TemplateColumn>
+            <PropertyColumn Property="x => x.Amount" Title="Amount" Format="N2" CellClassFunc="@(item => item.Amount < 0.0M ? "mud-error-text" : "mud-success-text" )" />
+            <TemplateColumn Title="Cleared" SortBy="x => x.IsCleared">
+                <CellTemplate>
+                    <MudCheckBox Checked="@context.Item.IsCleared" ReadOnly="true" />
+                </CellTemplate>
+            </TemplateColumn>
+        </Columns>
+    </MudDataGrid>
+}

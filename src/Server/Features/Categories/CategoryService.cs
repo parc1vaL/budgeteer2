@@ -1,5 +1,3 @@
-using Budgeteer.Server.Features.Categories.Contracts.Request;
-using Budgeteer.Server.Features.Categories.Contracts.Response;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 
@@ -28,7 +26,7 @@ public class CategoryService
     {
         return TypedResults.Ok(
             await this.context.Categories
-                .Select(a => new CategoryListItem
+                .Select(a => new GetCategoriesResponse
                 {
                     Id = a.Id,
                     Name = a.Name,
@@ -39,7 +37,7 @@ public class CategoryService
     public async Task<IResult> GetCategoryAsync(int id, CancellationToken cancellationToken)
     {
         var result = await this.context.Categories
-            .Select(a => new CategoryDetails { Id = a.Id, Name = a.Name, })
+            .Select(a => new GetCategoriesResponse { Id = a.Id, Name = a.Name, })
             .FirstOrDefaultAsync(a => a.Id == id, cancellationToken);
 
         return result is not null

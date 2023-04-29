@@ -1,6 +1,4 @@
 using System.Net.Mime;
-using Budgeteer.Server.Features.Transactions.Contracts.Request;
-using Budgeteer.Server.Features.Transactions.Contracts.Response;
 
 namespace Budgeteer.Server.Features.Transactions;
 
@@ -15,14 +13,14 @@ public static class TransactionEndpoints
                 (TransactionService service, CancellationToken cancellationToken) => service.GetTransactionsAsync(cancellationToken))
             .WithName(Operations.Transactions.GetList)
             .WithTags(GroupName)
-            .Produces<TransactionListItem[]>(StatusCodes.Status200OK, MediaTypeNames.Application.Json);
+            .Produces<GetTransactionsResponse[]>(StatusCodes.Status200OK, MediaTypeNames.Application.Json);
 
         application
             .MapGet("/transactions/{id:int}", 
                 (int id, TransactionService service, CancellationToken cancellationToken) => service.GetTransactionAsync(id, cancellationToken))
             .WithName(Operations.Transactions.GetDetails)
             .WithTags(GroupName)
-            .Produces<TransactionDetails>(StatusCodes.Status200OK, MediaTypeNames.Application.Json)
+            .Produces<GetTransactionsResponse>(StatusCodes.Status200OK, MediaTypeNames.Application.Json)
             .Produces(StatusCodes.Status404NotFound);
 
         application

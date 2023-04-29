@@ -1,5 +1,3 @@
-using Budgeteer.Server.Features.Budgets.Contracts.Request;
-using Budgeteer.Server.Features.Budgets.Contracts.Response;
 using Budgeteer.Server.Features.Transactions;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
@@ -64,7 +62,7 @@ public class BudgetService
             .SumAsync(b => b.Amount, cancellationToken);
 
         return TypedResults.Ok(
-            new BudgetMonth
+            new GetBudgetResponse
             {
                 Income = income,
                 LeftoverBudget = incomePrevious - budgetPrevious,
@@ -108,7 +106,7 @@ public class BudgetService
         return TypedResults.Ok();
     }
 
-    private IQueryable<BudgetMonthItem> GetItemsQuery(GetBudgetRequest request)
+    private IQueryable<GetBudgetResponseItem> GetItemsQuery(GetBudgetRequest request)
     {
         var budgetDate = new DateOnly(request.Year, request.Month, 1);
         var nextMonth = budgetDate.AddMonths(1);
@@ -176,7 +174,7 @@ public class BudgetService
                 on currentBudget.CategoryId equals currentOutflow.CategoryId
             join previousOutflow in previousOutflowQuery
                 on currentBudget.CategoryId equals previousOutflow.CategoryId
-            select new BudgetMonthItem
+            select new GetBudgetResponseItem
             {
                 CategoryId = currentBudget.CategoryId,
                 Category = currentBudget.CategoryName,

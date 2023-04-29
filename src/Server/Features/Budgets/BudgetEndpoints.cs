@@ -1,6 +1,4 @@
 using System.Net.Mime;
-using Budgeteer.Server.Features.Budgets.Contracts.Request;
-using Budgeteer.Server.Features.Budgets.Contracts.Response;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Budgeteer.Server.Features.Budgets;
@@ -17,7 +15,7 @@ public static class BudgetEndpoints
                 => service.GetBudget(new GetBudgetRequest { Year = year, Month = month, }, cancellationToken))
             .WithName(Operations.Budgets.Get)
             .WithTags(GroupName)
-            .Produces<BudgetMonth>(StatusCodes.Status200OK, MediaTypeNames.Application.Json)
+            .Produces<GetBudgetResponse>(StatusCodes.Status200OK, MediaTypeNames.Application.Json)
             .Produces<HttpValidationProblemDetails>(StatusCodes.Status400BadRequest, MediaTypeNames.Application.Json);
 
         app.MapPut(

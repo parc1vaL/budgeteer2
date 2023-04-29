@@ -1,5 +1,3 @@
-using Budgeteer.Server.Features.Transactions.Contracts.Request;
-using Budgeteer.Server.Features.Transactions.Contracts.Response;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 
@@ -27,13 +25,15 @@ public class TransactionService
     public async Task<IResult> GetTransactionsAsync(CancellationToken cancellationToken)
     {
         var transactions = await this.context.Transactions
-            .Select(t => new TransactionListItem
+            .Select(t => new GetTransactionsResponse
             {
                 Id = t.Id,
                 TransactionType = t.TransactionType,
                 IsCleared = t.IsCleared,
                 Account = t.Account.Name,
                 AccountId = t.AccountId,
+                TransferAccount = t.TransferAccount!.Name,
+                TransferAccountId = t.TransferAccountId,
                 Category = t.Category!.Name,
                 CategoryId = t.CategoryId,
                 Date = t.Date,
@@ -51,13 +51,15 @@ public class TransactionService
     public async Task<IResult> GetTransactionAsync(int id, CancellationToken cancellationToken)
     {
         var result = await this.context.Transactions
-            .Select(t => new TransactionDetails 
+            .Select(t => new GetTransactionsResponse 
             {
                 Id = t.Id,
                 TransactionType = t.TransactionType,
                 IsCleared = t.IsCleared,
                 Account = t.Account.Name,
                 AccountId = t.AccountId,
+                TransferAccount = t.TransferAccount!.Name,
+                TransferAccountId = t.TransferAccountId,
                 Category = t.Category!.Name,
                 CategoryId = t.CategoryId,
                 Date = t.Date,

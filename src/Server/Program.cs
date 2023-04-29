@@ -22,6 +22,16 @@ builder.Services.AddTransient<BudgetService>();
 
 builder.Services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
 
+builder.Services.AddCors(setup =>
+{
+    setup.AddPolicy("localhost", builder =>
+    {
+        builder.WithOrigins("http://localhost:5197")
+            .AllowAnyHeader()
+            .AllowAnyMethod();
+    });
+});
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
@@ -56,6 +66,7 @@ app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.yaml", $"{builder.E
 // Configure the HTTP request pipeline.
 app.UseRouting();
 
+app.UseCors("localhost");
 app.UseSerilogRequestLogging();
 
 if (app.Environment.IsDevelopment())

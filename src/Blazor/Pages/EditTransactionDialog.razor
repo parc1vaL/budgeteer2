@@ -1,0 +1,87 @@
+@using Microsoft.AspNetCore.Components.Forms
+@using Blazored.FluentValidation
+
+<MudDialog DefaultFocus="DefaultFocus.Element" ClassActions="!justify-normal">
+    <DialogContent>
+        @if (Transaction is null)
+        {
+            <p>Loading...</p>
+        }
+        else
+        {
+            <EditForm Model="@Transaction" id="form" OnValidSubmit="@Submit">
+                <FluentValidationValidator Validator="@this.validator"/>
+                <div class="flex">
+                    <MudDatePicker Label="Date" For="@(() => Transaction.Date)" @bind-Date="@Transaction.Date" />
+                </div>
+                <div class="flex">
+                    <MudSelect Label="Transaction Type" For="@(() => Transaction.TransactionType)" @bind-Value="@Transaction.TransactionType">
+                        <MudSelectItem Value="@TransactionType.External">External</MudSelectItem>
+                        <MudSelectItem Value="@TransactionType.Internal">Internal</MudSelectItem>
+                    </MudSelect>
+                </div>
+                @if (Transaction.ShowIncomeType)
+                {
+                    <div class="flex">
+                        <MudSelect Label="Income Type" For="@(() => Transaction.IncomeType)" @bind-Value="@Transaction.IncomeType">
+                            <MudSelectItem Value="@IncomeType.None">None</MudSelectItem>
+                            <MudSelectItem Value="@IncomeType.CurrentMonth">Current Month</MudSelectItem>
+                            <MudSelectItem Value="@IncomeType.NextMonth">Next Month</MudSelectItem>
+                        </MudSelect>
+                    </div>                    
+                }
+                <div class="flex">
+                    <MudSelect Label="Account" For="@(() => Transaction.Account)" @bind-Value="@Transaction.Account">
+                        @foreach (var account in this.Accounts)
+                        {
+                            <MudSelectItem Value="@account">@account.Name (@account.Balance.ToString("N2"))</MudSelectItem>
+                        }
+                    </MudSelect>
+                </div>
+                @if (Transaction.ShowTransferAccount)
+                {
+                    <div class="flex">
+                        <MudSelect Label="Transfer Account" For="@(() => Transaction.TransferAccount)" @bind-Value="@Transaction.TransferAccount">
+                            @foreach (var account in this.Accounts)
+                            {
+                                <MudSelectItem Value="@account">@account.Name (@account.Balance.ToString("N2"))</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </div>    
+                }
+                @if (Transaction.ShowCategory)
+                {
+                    <div class="flex">
+                        <MudSelect Label="Category" For="@(() => Transaction.Category)" @bind-Value="@Transaction.Category">
+                            @foreach (var category in this.Categories)
+                            {
+                                <MudSelectItem Value="@category">@category.Name</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </div>                    
+                }
+                @if (Transaction.ShowPayee)
+                {
+                    <div class="flex">
+                        <MudTextField Label="Payee" For="@(() => Transaction.Payee)" @bind-Value="@Transaction.Payee" />
+                    </div>
+                }
+                <div class="flex">
+                    <MudNumericField Label="Amount" For="@(() => Transaction.Amount)" Format="N2" HideSpinButtons="true" @bind-Value="@Transaction.Amount" />
+                </div>
+                <div class="flex justify-end">
+                    <MudCheckBox For="@(() => Transaction.IsCleared)" @bind-Checked="@Transaction.IsCleared" Label="Cleared" />
+                </div>
+            </EditForm>
+        }
+    </DialogContent>
+    <DialogActions>
+        @if (this.TransactionId.HasValue)
+        {
+            <MudButton Color="Color.Error" OnClick="@Delete">Delete</MudButton>
+        }
+        <MudSpacer />
+        <MudButton OnClick="@Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Primary" ButtonType="ButtonType.Submit" form="form">Save</MudButton>
+    </DialogActions>
+</MudDialog>

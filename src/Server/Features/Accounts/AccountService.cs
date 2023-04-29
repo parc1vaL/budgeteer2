@@ -1,5 +1,3 @@
-using Budgeteer.Server.Features.Accounts.Contracts.Request;
-using Budgeteer.Server.Features.Accounts.Contracts.Response;
 using Budgeteer.Server.Features.Transactions;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
@@ -29,7 +27,7 @@ public class AccountService
     {
         return TypedResults.Ok(
             await this.context.Accounts
-                .Select(a => new AccountListItem
+                .Select(a => new GetAccountResponse
                 {
                     Id = a.Id, 
                     Name = a.Name, 
@@ -42,7 +40,7 @@ public class AccountService
     public async Task<IResult> GetAccountAsync(int id, CancellationToken cancellationToken)
     {
         var result = await this.context.Accounts
-            .Select(a => new AccountDetails
+            .Select(a => new GetAccountResponse
             {
                 Id = a.Id, 
                 Name = a.Name, 

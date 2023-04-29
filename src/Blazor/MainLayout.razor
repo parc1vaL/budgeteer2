@@ -1,0 +1,41 @@
+﻿@inherits LayoutComponentBase
+
+<MudThemeProvider IsDarkMode="true"/>
+<MudDialogProvider/>
+<MudSnackbarProvider/>
+
+<main class="flex h-screen">
+    <MudPaper Width="250px" Class="flex-none py-3" Elevation="0">
+        <MudNavMenu>
+            <a href="/budget">
+                <MudText Typo="Typo.h6" Class="px-4">Budgeteer</MudText>
+            </a>
+            <MudText Typo="Typo.body2" Class="px-4 mud-text-secondary">Secondary Text</MudText>
+            <MudDivider Class="my-2"/>
+            <MudNavLink Href="/budget">Budget</MudNavLink>
+            <MudNavLink Href="/reports">Reports</MudNavLink>
+            <MudNavLink Href="/transactions">Transactions</MudNavLink>
+            <MudNavGroup Title="Accounts" HideExpandIcon="true" Expanded="true">
+                <MudNavGroup Title="On-Budget" HideExpandIcon="false" @bind-Expanded="@onBudgetExpanded">
+                    @foreach (var account in this.accounts.Where(account => account.OnBudget))
+                    {
+                        <MudNavLink Href=@($"/accounts/{account.Id}") Match="NavLinkMatch.All">
+                            @account.Name
+                        </MudNavLink>
+                    }
+                </MudNavGroup>
+                <MudNavGroup Title="Off-Budget" HideExpandIcon="false" @bind-Expanded="@offBudgetExpanded">
+                    @foreach (var account in this.accounts.Where(account => !account.OnBudget))
+                    {
+                        <MudNavLink Href=@($"/accounts/{account.Id}") Match="NavLinkMatch.All">@account.Name</MudNavLink>
+                    }
+                </MudNavGroup>
+            </MudNavGroup>
+        </MudNavMenu>
+        <MudNavLink Href="/add-account" Icon="@Icons.Material.Filled.Add">Add account</MudNavLink>
+    </MudPaper>
+    
+    <MudContainer Fixed="true" Class="py-4">
+        @Body
+    </MudContainer>
+</main>

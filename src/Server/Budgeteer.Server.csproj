@@ -22,5 +22,14 @@
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.4.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Shared\Budgeteer.Shared.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Features\Transactions\Contracts\Request\" />
+    <Folder Include="Features\Transactions\Contracts\Response\" />
+  </ItemGroup>
+
 
 </Project>

@@ -38,9 +38,6 @@ public class EditTransactionModelValidator : AbstractValidator<EditTransactionMo
             {
                 RuleFor(r => r.Category)
                     .Cascade(CascadeMode.Stop)
-                    .Null()
-                    .When(r => r.IncomeType != IncomeType.None, ApplyConditionTo.CurrentValidator)
-                    .WithMessage("Category must not be set for income transactions.")
                     .NotEmpty()
                     .When(r => r.IncomeType == IncomeType.None, ApplyConditionTo.CurrentValidator)
                     .WithMessage("Category must be set for non-income transactions.")

@@ -1,0 +1,21 @@
+@using Microsoft.AspNetCore.Components.Forms
+
+<MudDialog>
+    <DialogContent>
+        <EditForm Model="@Model" id="form" OnValidSubmit="@Submit">
+            <div class="flex">
+                <MudTextField Label="Month" Disabled="true" Value="@Model.Date.ToString("MMMM yyyy")" />
+            </div>            
+            <div class="flex">
+                <MudTextField Label="Category" Disabled="true" Value="@Model.Category"/>
+            </div>
+            <div class="flex">
+                <MudNumericField @ref="@AmountField" Label="Budget" For="@(() => Model.Budget)" Format="N2" HideSpinButtons="true" @bind-Value="@Model.Budget"/>
+            </div>
+        </EditForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="@Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Primary" ButtonType="ButtonType.Submit" form="form">Save</MudButton>
+    </DialogActions>
+</MudDialog>

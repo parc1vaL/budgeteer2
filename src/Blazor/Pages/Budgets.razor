@@ -1,5 +1,6 @@
 @page "/budget"
 @page "/budget/{year:int}/{month:int}"
+@using Budgeteer.Blazor.Models
 
 @if (this.Months is null)
 {
@@ -38,7 +39,7 @@ else
                     @foreach (var budget in month.Item.Budgets)
                     {
                         <MudText>@budget.Category</MudText>
-                        <MudLink OnClick="@(() => Console.WriteLine(budget.CurrentBudget))" Color="Color.Default" Underline="Underline.None" Class="justify-self-end">@budget.CurrentBudget.ToString("N2")</MudLink>
+                        <MudLink OnClick="@(() => EditBudget(month, budget))" Underline="Underline.None" Class="justify-self-end">@budget.CurrentBudget.ToString("N2")</MudLink>
                         <MudText Class="justify-self-end">@budget.CurrentOutflow.ToString("N2")</MudText>
                         <MudText Color="@(budget.RemainingBudget < 0.0M ? Color.Error : Color.Success)" Class="justify-self-end">@budget.RemainingBudget.ToString("N2")</MudText>
                     }

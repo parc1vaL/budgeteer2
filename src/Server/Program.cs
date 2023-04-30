@@ -1,14 +1,13 @@
-using Budgeteer.Server;
-using FluentValidation;
-using Microsoft.EntityFrameworkCore;
-using Serilog;
 using System.Reflection;
+using Budgeteer.Server;
 using Budgeteer.Server.Features.Accounts;
 using Budgeteer.Server.Features.Budgets;
 using Budgeteer.Server.Features.Categories;
 using Budgeteer.Server.Features.Transactions;
-using Microsoft.EntityFrameworkCore.Diagnostics;
+using FluentValidation;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -22,32 +21,18 @@ builder.Services.AddTransient<BudgetService>();
 
 builder.Services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
 
-builder.Services.AddCors(setup =>
-{
-    setup.AddPolicy("localhost", builder =>
-    {
-        builder.WithOrigins("http://localhost:5197")
-            .AllowAnyHeader()
-            .AllowAnyMethod();
-    });
-});
-
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo { Title = builder.Environment.ApplicationName, Version = "v1" });
 
-    c.MapType<DateOnly>(() => new OpenApiSchema
-    {
-        Type = "string",
-        Format = "date"
-    });
+    c.MapType<DateOnly>(() => new OpenApiSchema { Type = "string", Format = "date" });
 });
 
 builder.Services.AddControllersWithViews();
 builder.Services.AddRazorPages();
 
-builder.Services.AddDbContext<BudgetContext>(settings => 
+builder.Services.AddDbContext<BudgetContext>(settings =>
 {
     settings
         .EnableSensitiveDataLogging(builder.Environment.IsDevelopment())
@@ -63,10 +48,12 @@ var app = builder.Build();
 app.UseSwagger();
 app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.yaml", $"{builder.Environment.ApplicationName} v1"));
 
+app.UseBlazorFrameworkFiles();
+app.UseStaticFiles();
+
 // Configure the HTTP request pipeline.
 app.UseRouting();
 
-app.UseCors("localhost");
 app.UseSerilogRequestLogging();
 
 if (app.Environment.IsDevelopment())
@@ -82,5 +69,7 @@ app.MapAccounts();
 app.MapCategories();
 app.MapTransactions();
 app.MapBudgets();
+
+app.MapFallbackToFile("index.html");
 
 app.Run();

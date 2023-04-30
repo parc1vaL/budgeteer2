@@ -16,18 +16,15 @@ public partial class Transactions
 
     protected override async Task OnInitializedAsync()
     {
-        this.transactions = await LoadTransactions();
+        transactions = await LoadTransactions();
     }
 
     private async Task OnRowClick(DataGridRowClickEventArgs<Transaction> item)
     {
-        var parameters = new DialogParameters
-        {
-            [nameof(EditTransactionDialog.TransactionId)] = item.Item.Id,
-        };
+        var parameters = new DialogParameters { [nameof(EditTransactionDialog.TransactionId)] = item.Item.Id };
 
-        var options = new DialogOptions { FullWidth = true, CloseOnEscapeKey = true, DisableBackdropClick = true,};
-        var dialog = await this.DialogService.ShowAsync<EditTransactionDialog>("Edit transaction", parameters, options);
+        var options = new DialogOptions { FullWidth = true, CloseOnEscapeKey = true, DisableBackdropClick = true };
+        var dialog = await DialogService.ShowAsync<EditTransactionDialog>("Edit transaction", parameters, options);
         var dialogResult = await dialog.Result;
 
         if (dialogResult.Canceled)
@@ -35,13 +32,13 @@ public partial class Transactions
             return;
         }
 
-        this.transactions = null;
+        transactions = null;
         StateHasChanged();
 
         switch (((EditTransactionDialogResult)dialogResult.Data).Action)
         {
             case Action.Delete:
-                await this.HttpClient.DeleteAsync($"/transactions/{item.Item.Id}");
+                await HttpClient.DeleteAsync($"/api/transactions/{item.Item.Id}");
                 break;
             case Action.Save:
                 var transaction = ((EditTransactionDialogResult)dialogResult.Data).Model!;
@@ -54,38 +51,36 @@ public partial class Transactions
                     Date = DateOnly.FromDateTime(transaction.Date ?? DateTime.Today),
                     Amount = transaction.Amount,
                     Payee = transaction.ShowPayee ? transaction.Payee : default,
-                    TransferAccountId = transaction.ShowTransferAccount ? transaction.TransferAccount.Id : default(int?),
+                    TransferAccountId =
+                        transaction.ShowTransferAccount ? transaction.TransferAccount.Id : default(int?),
                     IncomeType = transaction.ShowIncomeType ? transaction.IncomeType : IncomeType.None,
-                    CategoryId = transaction.ShowCategory ? transaction.Category.Id : default(int?),
+                    CategoryId = transaction.ShowCategory ? transaction.Category.Id : default(int?)
                 };
-        
-                await this.HttpClient.PutAsJsonAsync($"/transactions/{transaction.Id}", request);
+
+                await HttpClient.PutAsJsonAsync($"/api/transactions/{transaction.Id}", request);
                 break;
             default:
                 throw new InvalidOperationException(
                     $"Unknown dialog result: {((EditTransactionDialogResult)dialogResult.Data).Action}");
         }
-        
-        
-        this.transactions = await LoadTransactions();
+
+
+        transactions = await LoadTransactions();
     }
 
     private async Task CreateTransaction()
     {
-        var parameters = new DialogParameters
-        {
-            [nameof(EditTransactionDialog.TransactionId)] = null,
-        };
+        var parameters = new DialogParameters { [nameof(EditTransactionDialog.TransactionId)] = null };
 
-        var options = new DialogOptions { FullWidth = true, CloseOnEscapeKey = true, DisableBackdropClick = true,};
-        var dialog = await this.DialogService.ShowAsync<EditTransactionDialog>("Create transaction", parameters, options);
+        var options = new DialogOptions { FullWidth = true, CloseOnEscapeKey = true, DisableBackdropClick = true };
+        var dialog = await DialogService.ShowAsync<EditTransactionDialog>("Create transaction", parameters, options);
         var dialogResult = await dialog.Result;
 
         if (dialogResult.Canceled)
         {
             return;
         }
-        
+
         var transaction = ((EditTransactionDialogResult)dialogResult.Data).Model!;
 
         var request = new CreateTransactionRequest
@@ -98,19 +93,19 @@ public partial class Transactions
             Payee = transaction.ShowPayee ? transaction.Payee : default,
             TransferAccountId = transaction.ShowTransferAccount ? transaction.TransferAccount.Id : default(int?),
             IncomeType = transaction.ShowIncomeType ? transaction.IncomeType : IncomeType.None,
-            CategoryId = transaction.ShowCategory ? transaction.Category.Id : default(int?),
+            CategoryId = transaction.ShowCategory ? transaction.Category.Id : default(int?)
         };
 
-        this.transactions = null;
+        transactions = null;
         StateHasChanged();
-        
-        await this.HttpClient.PostAsJsonAsync("/transactions", request);
-        this.transactions = await LoadTransactions();
+
+        await HttpClient.PostAsJsonAsync("/api/transactions", request);
+        transactions = await LoadTransactions();
     }
 
     private async Task<Transaction[]> LoadTransactions()
     {
-        var result = await this.HttpClient.GetFromJsonAsync<GetTransactionsResponse[]>("/transactions") 
+        var result = await HttpClient.GetFromJsonAsync<GetTransactionsResponse[]>("/api/transactions")
                      ?? Array.Empty<GetTransactionsResponse>();
         return result.Select(transaction => new Transaction
         {
@@ -126,7 +121,7 @@ public partial class Transactions
             IsCleared = transaction.IsCleared,
             TransactionType = transaction.TransactionType,
             TransferAccount = transaction.TransferAccount,
-            TransferAccountId = transaction.TransferAccountId,
+            TransferAccountId = transaction.TransferAccountId
         }).ToArray();
     }
 }

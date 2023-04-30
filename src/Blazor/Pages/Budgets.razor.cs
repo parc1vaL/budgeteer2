@@ -19,7 +19,7 @@ public partial class Budgets
 
     protected override async Task OnParametersSetAsync()
     {
-        this.Date = new DateOnly(this.Year ?? DateTime.Today.Year, this.Month ?? DateTime.Today.Month, 1);
+        Date = new DateOnly(Year ?? DateTime.Today.Year, Month ?? DateTime.Today.Month, 1);
 
         await LoadBudgets();
     }
@@ -31,16 +31,13 @@ public partial class Budgets
             Date = month.Date,
             CategoryId = budget.CategoryId,
             Category = budget.Category,
-            Budget = budget.CurrentBudget,
-        };
-        
-        var parameters = new DialogParameters
-        {
-            [nameof(EditBudgetDialog.Model)] = parameter,
+            Budget = budget.CurrentBudget
         };
 
-        var options = new DialogOptions { FullWidth = true, CloseOnEscapeKey = true, DisableBackdropClick = true,};
-        var dialog = await this.DialogService.ShowAsync<EditBudgetDialog>("Edit Budget", parameters, options);
+        var parameters = new DialogParameters { [nameof(EditBudgetDialog.Model)] = parameter };
+
+        var options = new DialogOptions { FullWidth = true, CloseOnEscapeKey = true, DisableBackdropClick = true };
+        var dialog = await DialogService.ShowAsync<EditBudgetDialog>("Edit Budget", parameters, options);
         var dialogResult = await dialog.Result;
 
         if (dialogResult.Canceled)
@@ -50,24 +47,25 @@ public partial class Budgets
 
         var model = (EditBudgetModel)dialogResult.Data;
 
-        this.Months = null;
+        Months = null;
         StateHasChanged();
 
-        await this.HttpClient.PutAsJsonAsync(
-            $"/budgets/{month.Date.Year}/{month.Date.Month}/{budget.CategoryId}",
+        await HttpClient.PutAsJsonAsync(
+            $"/api/budgets/{month.Date.Year}/{month.Date.Month}/{budget.CategoryId}",
             model.Budget);
         await LoadBudgets();
     }
 
     private async Task LoadBudgets()
     {
-        var dates = new[] { this.Date.AddMonths(-1), this.Date, this.Date.AddMonths(1), };
+        var dates = new[] { Date.AddMonths(-1), Date, Date.AddMonths(1) };
 
-        this.Months = await Task.WhenAll(dates.Select(async date =>
+        Months = await Task.WhenAll(dates.Select(async date =>
         {
-            var response = await this.HttpClient.GetFromJsonAsync<GetBudgetResponse>($"budgets/{date.Year}/{date.Month}");
+            var response =
+                await HttpClient.GetFromJsonAsync<GetBudgetResponse>($"/api/budgets/{date.Year}/{date.Month}");
 
-            return new Budget { Date = date, Item = response, };
+            return new Budget { Date = date, Item = response };
         }));
     }
 }

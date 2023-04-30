@@ -5,17 +5,16 @@ namespace Budgeteer.Blazor;
 
 public partial class MainLayout
 {
-    [Inject]
-    private HttpClient HttpClient { get; set; } = null!;
-
     private GetAccountResponse[] accounts = Array.Empty<GetAccountResponse>();
-    
+
     private bool offBudgetExpanded = true;
     private bool onBudgetExpanded = true;
 
+    [Inject] private HttpClient HttpClient { get; set; } = null!;
+
     protected override async Task OnInitializedAsync()
     {
-        this.accounts = await this.HttpClient.GetFromJsonAsync<GetAccountResponse[]>("/accounts") 
-                        ?? Array.Empty<GetAccountResponse>();
+        accounts = await HttpClient.GetFromJsonAsync<GetAccountResponse[]>("/api/accounts")
+                   ?? Array.Empty<GetAccountResponse>();
     }
 }

@@ -9,45 +9,51 @@ namespace Budgeteer.Blazor.Pages;
 
 public partial class EditTransactionDialog : IDisposable
 {
-    [Inject]
-    private HttpClient HttpClient { get; set; } = null!;
+    private IValidator<EditTransactionModel> validator = null!;
+
+    [Inject] private HttpClient HttpClient { get; set; } = null!;
 
     private GetAccountResponse[] Accounts { get; set; } = Array.Empty<GetAccountResponse>();
     private GetCategoriesResponse[] Categories { get; set; } = Array.Empty<GetCategoriesResponse>();
 
-    [CascadingParameter]
-    private MudDialogInstance MudDialog { get; set; } = null!;
+    [CascadingParameter] private MudDialogInstance MudDialog { get; set; } = null!;
 
     [Parameter] public int? TransactionId { get; set; }
 
-    private IValidator<EditTransactionModel> validator = null!;
-
     public EditTransactionModel? Transaction { get; set; }
+
+    public void Dispose()
+    {
+        if (Transaction is not null)
+        {
+            Transaction.VisibilityUpdated -= Render;
+        }
+    }
 
     protected override async Task OnInitializedAsync()
     {
-        this.Accounts = await this.HttpClient.GetFromJsonAsync<GetAccountResponse[]>("accounts")
-                        ?? Array.Empty<GetAccountResponse>();
-        this.Categories = await this.HttpClient.GetFromJsonAsync<GetCategoriesResponse[]>("categories") 
-                          ?? Array.Empty<GetCategoriesResponse>();
+        Accounts = await HttpClient.GetFromJsonAsync<GetAccountResponse[]>("/api/accounts")
+                   ?? Array.Empty<GetAccountResponse>();
+        Categories = await HttpClient.GetFromJsonAsync<GetCategoriesResponse[]>("/api/categories")
+                     ?? Array.Empty<GetCategoriesResponse>();
 
-        this.validator = new EditTransactionModelValidator(this.Accounts, this.Categories);
+        validator = new EditTransactionModelValidator(Accounts, Categories);
 
-        if (this.TransactionId.HasValue)
+        if (TransactionId.HasValue)
         {
-            var response = await this.HttpClient.GetFromJsonAsync<GetTransactionsResponse>($"transactions/{this.TransactionId}");
+            var response = await HttpClient.GetFromJsonAsync<GetTransactionsResponse>($"/api/transactions/{TransactionId}");
 
             if (response is not null)
             {
-                var account = this.Accounts.First(account => account.Id == response.AccountId);
+                var account = Accounts.First(account => account.Id == response.AccountId);
                 var transferAccount = response.TransferAccountId.HasValue
-                    ? this.Accounts.First(transfer => transfer.Id == response.TransferAccountId)
+                    ? Accounts.First(transfer => transfer.Id == response.TransferAccountId)
                     : null;
                 var category = response.CategoryId.HasValue
-                    ? this.Categories.First(category => category.Id == response.CategoryId)
+                    ? Categories.First(category => category.Id == response.CategoryId)
                     : null;
-            
-                this.Transaction = new EditTransactionModel
+
+                Transaction = new EditTransactionModel
                 {
                     Id = response.Id,
                     TransactionType = response.TransactionType,
@@ -58,48 +64,51 @@ public partial class EditTransactionDialog : IDisposable
                     Category = category,
                     Payee = response.Payee,
                     Amount = response.Amount,
-                    IsCleared = response.IsCleared,
+                    IsCleared = response.IsCleared
                 };
 
-                this.Transaction.VisibilityUpdated += Render;
+                Transaction.VisibilityUpdated += Render;
             }
         }
         else
         {
-            this.Transaction = new EditTransactionModel
+            Transaction = new EditTransactionModel
             {
                 Id = null,
                 TransactionType = TransactionType.External,
                 IncomeType = IncomeType.None,
                 Date = DateTime.Today,
-                Account = this.Accounts.FirstOrDefault(),
+                Account = Accounts.FirstOrDefault(),
                 TransferAccount = null,
-                Category = this.Categories.FirstOrDefault(),
+                Category = Categories.FirstOrDefault(),
                 Payee = string.Empty,
                 Amount = 0.0M,
-                IsCleared = false,
+                IsCleared = false
             };
 
-            this.Transaction.VisibilityUpdated += Render;
+            Transaction.VisibilityUpdated += Render;
         }
-        
     }
 
-    public void Dispose()
+    private void Render(object? sender, EventArgs? args)
     {
-        if (this.Transaction is not null)
-        {
-            this.Transaction.VisibilityUpdated -= Render;
-        }
+        StateHasChanged();
     }
 
-    private void Render(object? sender, EventArgs? args) => StateHasChanged();
+    private void Delete()
+    {
+        MudDialog.Close(
+            new EditTransactionDialogResult { Action = Action.Delete, Model = null });
+    }
 
-    private void Delete() => MudDialog.Close(
-        new EditTransactionDialogResult { Action = Action.Delete, Model = null, });
+    private void Cancel()
+    {
+        MudDialog.Cancel();
+    }
 
-    private void Cancel() => MudDialog.Cancel();
-    
-    private void Submit() => MudDialog.Close(
-        new EditTransactionDialogResult { Action = Action.Save, Model = this.Transaction });
+    private void Submit()
+    {
+        MudDialog.Close(
+            new EditTransactionDialogResult { Action = Action.Save, Model = Transaction });
+    }
 }

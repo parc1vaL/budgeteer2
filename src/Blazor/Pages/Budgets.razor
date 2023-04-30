@@ -1,50 +1,75 @@
 @page "/budget"
 @page "/budget/{year:int}/{month:int}"
-@using Budgeteer.Blazor.Models
 
-@if (this.Months is null)
+@if (Months is null)
 {
     <p>Loading...</p>
 }
 else
 {
-    <div class="flex w-100 justify-around">
-        @foreach (var month in this.Months)
-        {
-            <MudPaper Class="p-4">
-                <MudText Typo="Typo.h4" Align="Align.Center" Class="mb-4">@month.Date.ToString("MMMM yyyy")</MudText>
-                
-                <div class="grid grid-cols-2 mb-4">
-                    <MudText>Leftover:</MudText> 
-                    <MudText Class="justify-self-end">@month.Item.LeftoverBudget.ToString("N2")</MudText>
-                    
-                    <MudText>Income:</MudText> 
-                    <MudText Class="justify-self-end">@month.Item.Income.ToString("N2")</MudText>
-                    
-                    <MudText>Budgeted:</MudText> 
-                    <MudText Class="justify-self-end">@month.Item.Budgets.Sum(budget => budget.CurrentBudget).ToString("N2")</MudText>
-                    
-                    <MudText>Remaining:</MudText> 
-                    <MudText Color="@(month.Item.ToBeBudgeted < 0.0M ? Color.Error : Color.Success)"
-                             Class="justify-self-end">
-                        @month.Item.ToBeBudgeted.ToString("N2")
-                    </MudText>
-                </div>
-                
-                <div class="grid grid-cols-4 gap-x-2">
-                    <MudText />
-                    <MudText Class="justify-self-end">Budgeted</MudText>
-                    <MudText Class="justify-self-end">Outflows</MudText>
-                    <MudText Class="justify-self-end">Remaining</MudText>
-                    @foreach (var budget in month.Item.Budgets)
-                    {
-                        <MudText>@budget.Category</MudText>
-                        <MudLink OnClick="@(() => EditBudget(month, budget))" Underline="Underline.None" Class="justify-self-end">@budget.CurrentBudget.ToString("N2")</MudLink>
-                        <MudText Class="justify-self-end">@budget.CurrentOutflow.ToString("N2")</MudText>
-                        <MudText Color="@(budget.RemainingBudget < 0.0M ? Color.Error : Color.Success)" Class="justify-self-end">@budget.RemainingBudget.ToString("N2")</MudText>
-                    }
-                </div>
-            </MudPaper>
-        }
+    <div class="flex justify-center">
+        <div class="grid grid-cols-3 gap-4 justify-items-center">
+            <div>
+                <MudLink Href=@($"/budget/{Date.AddMonths(-1).Year}/{Date.AddMonths(-1).Month}") Underline="Underline.None">
+                    <div class="flex items-center">
+                        <MudIcon Icon="@Icons.Material.Filled.ArrowBack"/>
+                        Previous
+                    </div>
+                </MudLink>
+            </div>
+            <div>
+                @if (Date.Year != DateTime.Today.Year || Date.Month != DateTime.Today.Month)
+                {
+                    <MudLink Href="/budget" Underline="Underline.None">Go to Today</MudLink>
+                }
+            </div>
+            <div>
+                <MudLink Href=@($"/budget/{Date.AddMonths(1).Year}/{Date.AddMonths(1).Month}") Underline="Underline.None">
+                    <div class="flex items-center">
+                        Next
+                        <MudIcon Icon="@Icons.Material.Filled.ArrowForward"/>
+                    </div>
+                </MudLink>
+            </div>
+
+            @foreach (var month in Months)
+            {
+                <MudPaper Class="p-4">
+                    <MudText Typo="Typo.h4" Align="Align.Center" Class="mb-4">@month.Date.ToString("MMMM yyyy")</MudText>
+
+                    <div class="grid grid-cols-2 mb-4">
+                        <MudText>Leftover:</MudText>
+                        <MudText Class="justify-self-end">@month.Item.LeftoverBudget.ToString("N2")</MudText>
+
+                        <MudText>Income:</MudText>
+                        <MudText Class="justify-self-end">@month.Item.Income.ToString("N2")</MudText>
+
+                        <MudText>Budgeted:</MudText>
+                        <MudText Class="justify-self-end">@month.Item.Budgets.Sum(budget => budget.CurrentBudget).ToString("N2")</MudText>
+
+                        <MudText>Remaining:</MudText>
+                        <MudText Color="@(month.Item.ToBeBudgeted < 0.0M ? Color.Error : Color.Success)"
+                                 Class="justify-self-end">
+                            @month.Item.ToBeBudgeted.ToString("N2")
+                        </MudText>
+                    </div>
+
+                    <div class="grid grid-cols-4 gap-x-2">
+                        <MudText/>
+                        <MudText Class="justify-self-end">Budgeted</MudText>
+                        <MudText Class="justify-self-end">Outflows</MudText>
+                        <MudText Class="justify-self-end">Remaining</MudText>
+                        @foreach (var budget in month.Item.Budgets)
+                        {
+                            <MudText>@budget.Category</MudText>
+                            <MudLink OnClick="@(() => EditBudget(month, budget))" Underline="Underline.None" Class="justify-self-end">@budget.CurrentBudget.ToString("N2")</MudLink>
+                            <MudText Class="justify-self-end">@budget.CurrentOutflow.ToString("N2")</MudText>
+                            <MudText Color="@(budget.RemainingBudget < 0.0M ? Color.Error : Color.Success)" Class="justify-self-end">@budget.RemainingBudget.ToString("N2")</MudText>
+                        }
+                    </div>
+                </MudPaper>
+            }
+        </div>
+
     </div>
 }

@@ -3,28 +3,15 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Budgeteer.Server.Features.Transactions;
 
-public class TransactionService
+public class TransactionService(
+    BudgetContext context,
+    LinkGenerator linkGenerator,
+    IValidator<CreateTransactionRequest> createValidator,
+    IValidator<UpdateTransactionRequest> updateValidator)
 {
-    private readonly BudgetContext context;
-    private readonly LinkGenerator linkGenerator;
-    private readonly IValidator<CreateTransactionRequest> createValidator;
-    private readonly IValidator<UpdateTransactionRequest> updateValidator;
-
-    public TransactionService(
-        BudgetContext context,
-        LinkGenerator linkGenerator,
-        IValidator<CreateTransactionRequest> createValidator,
-        IValidator<UpdateTransactionRequest> updateValidator)
-    {
-        this.context = context;
-        this.linkGenerator = linkGenerator;
-        this.createValidator = createValidator;
-        this.updateValidator = updateValidator;
-    }
-
     public async Task<IResult> GetTransactionsAsync(CancellationToken cancellationToken)
     {
-        var transactions = await this.context.Transactions
+        var transactions = await context.Transactions
             .Select(t => new GetTransactionsResponse
             {
                 Id = t.Id,
@@ -50,7 +37,7 @@ public class TransactionService
 
     public async Task<IResult> GetTransactionAsync(int id, CancellationToken cancellationToken)
     {
-        var result = await this.context.Transactions
+        var result = await context.Transactions
             .Select(t => new GetTransactionsResponse 
             {
                 Id = t.Id,
@@ -76,7 +63,7 @@ public class TransactionService
 
     public async Task<IResult> CreateTransactionAsync(CreateTransactionRequest request, CancellationToken cancellationToken)
     {
-        var validationResult = await this.createValidator.ValidateAsync(request, cancellationToken);
+        var validationResult = await createValidator.ValidateAsync(request, cancellationToken);
 
         if (!validationResult.IsValid)
         {
@@ -104,11 +91,11 @@ public class TransactionService
             TransferTransactionId = null,
         };
 
-        this.context.Transactions.Add(transaction);
-        await this.context.SaveChangesAsync(cancellationToken);
+        context.Transactions.Add(transaction);
+        await context.SaveChangesAsync(cancellationToken);
 
         return TypedResults.Created(
-            this.linkGenerator.GetPathByName(Operations.Transactions.GetDetails, new RouteValueDictionary { ["id"] = transaction.Id, })
+            linkGenerator.GetPathByName(Operations.Transactions.GetDetails, new RouteValueDictionary { ["id"] = transaction.Id, })
                 ?? throw new InvalidOperationException("Resource path could not be generated."));
     }
 
@@ -121,12 +108,12 @@ public class TransactionService
                 + "'Transfer' but no transaction account ID set.");
         }
 
-        var accountOnBudget = await this.context.Accounts
+        var accountOnBudget = await context.Accounts
             .Where(a => a.Id == request.AccountId)
             .Select(a => a.OnBudget)
             .FirstOrDefaultAsync(cancellationToken);
 
-        await using var dbTransaction = await this.context.Database.BeginTransactionAsync(cancellationToken);
+        await using var dbTransaction = await context.Database.BeginTransactionAsync(cancellationToken);
 
         var transaction = new Transaction
         {
@@ -142,8 +129,8 @@ public class TransactionService
             TransferTransactionId = null, // added later on
         };
 
-        this.context.Transactions.Add(transaction);
-        await this.context.SaveChangesAsync(cancellationToken);
+        context.Transactions.Add(transaction);
+        await context.SaveChangesAsync(cancellationToken);
 
         var transfer = new Transaction
         {
@@ -159,29 +146,29 @@ public class TransactionService
             TransferTransactionId = transaction.Id,
         };
 
-        this.context.Transactions.Add(transfer);
-        await this.context.SaveChangesAsync(cancellationToken);
+        context.Transactions.Add(transfer);
+        await context.SaveChangesAsync(cancellationToken);
 
         transaction.TransferTransactionId = transfer.Id;
-        await this.context.SaveChangesAsync(cancellationToken);
+        await context.SaveChangesAsync(cancellationToken);
 
         await dbTransaction.CommitAsync(cancellationToken);
 
         return TypedResults.Created(
-            this.linkGenerator.GetPathByName(Operations.Transactions.GetDetails, new() { ["id"] = transaction.Id, })
+            linkGenerator.GetPathByName(Operations.Transactions.GetDetails, new() { ["id"] = transaction.Id, })
                 ?? throw new InvalidOperationException("Resource path could not be generated."));
     }
 
     public async Task<IResult> UpdateTransactionAsync(int id, UpdateTransactionRequest request, CancellationToken cancellationToken)
     {
-        var transaction = await this.context.Transactions.FirstOrDefaultAsync(item => item.Id == id, cancellationToken);
+        var transaction = await context.Transactions.FirstOrDefaultAsync(item => item.Id == id, cancellationToken);
 
         if (transaction is null)
         {
             return TypedResults.NotFound();
         }
 
-        var validationResult = await this.updateValidator.ValidateAsync(request, cancellationToken);
+        var validationResult = await updateValidator.ValidateAsync(request, cancellationToken);
 
         if (!validationResult.IsValid)
         {
@@ -197,7 +184,7 @@ public class TransactionService
                     + "'Transfer' but no transfer transaction ID set.");
             }
 
-            var transfer = await this.context.Transactions.FirstOrDefaultAsync(item => item.Id == transaction.TransferTransactionId.Value, cancellationToken);
+            var transfer = await context.Transactions.FirstOrDefaultAsync(item => item.Id == transaction.TransferTransactionId.Value, cancellationToken);
 
             if (transfer is null)
             {
@@ -243,7 +230,7 @@ public class TransactionService
                 nameof(request));
         }
 
-        var accountOnBudget = await this.context.Accounts
+        var accountOnBudget = await context.Accounts
             .Where(a => a.Id == request.AccountId)
             .Select(a => a.OnBudget)
             .FirstOrDefaultAsync(cancellationToken);
@@ -274,7 +261,7 @@ public class TransactionService
         transfer.Date = request.Date;
         transfer.Amount = -1.0M * request.Amount;
 
-        await this.context.SaveChangesAsync(cancellationToken);
+        await context.SaveChangesAsync(cancellationToken);
 
         return TypedResults.Ok();
     }
@@ -285,7 +272,7 @@ public class TransactionService
         UpdateTransactionRequest request, 
         CancellationToken cancellationToken)
     {
-        await using var dbTransaction = await this.context.Database.BeginTransactionAsync(cancellationToken);
+        await using var dbTransaction = await context.Database.BeginTransactionAsync(cancellationToken);
 
         // reset transfer properties
         transaction.TransactionType = TransactionType.External;
@@ -301,10 +288,10 @@ public class TransactionService
         transaction.IsCleared = request.IsCleared;
         transaction.Payee = request.Payee;
 
-        await this.context.SaveChangesAsync(cancellationToken);
+        await context.SaveChangesAsync(cancellationToken);
 
-        this.context.Transactions.Remove(transfer);
-        await this.context.SaveChangesAsync(cancellationToken);
+        context.Transactions.Remove(transfer);
+        await context.SaveChangesAsync(cancellationToken);
 
         await dbTransaction.CommitAsync(cancellationToken);
 
@@ -324,12 +311,12 @@ public class TransactionService
                 nameof(request));
         }
 
-        var accountOnBudget = await this.context.Accounts
+        var accountOnBudget = await context.Accounts
             .Where(a => a.Id == request.AccountId)
             .Select(a => a.OnBudget)
             .FirstOrDefaultAsync(cancellationToken);
 
-        await using var dbTransaction = await this.context.Database.BeginTransactionAsync(cancellationToken);
+        await using var dbTransaction = await context.Database.BeginTransactionAsync(cancellationToken);
 
         // create new transfer
         var transfer = new Transaction
@@ -360,12 +347,12 @@ public class TransactionService
         transaction.Amount = request.Amount;
         transaction.IsCleared = request.IsCleared;
 
-        this.context.Transactions.Add(transfer);
-        await this.context.SaveChangesAsync(cancellationToken);
+        context.Transactions.Add(transfer);
+        await context.SaveChangesAsync(cancellationToken);
 
         transaction.TransferTransactionId = transfer.Id;
 
-        await this.context.SaveChangesAsync(cancellationToken);
+        await context.SaveChangesAsync(cancellationToken);
         await dbTransaction.CommitAsync(cancellationToken);
 
         return TypedResults.Ok();
@@ -390,23 +377,23 @@ public class TransactionService
         transaction.IsCleared = request.IsCleared;
         transaction.Payee = request.Payee;
 
-        await this.context.SaveChangesAsync(cancellationToken);
+        await context.SaveChangesAsync(cancellationToken);
 
         return TypedResults.Ok();
     }
 
     public async Task<IResult> DeleteTransactionAsync(int id, CancellationToken cancellationToken)
     {
-        var transaction = await this.context.Transactions.FirstOrDefaultAsync(item => item.Id == id, cancellationToken);
+        var transaction = await context.Transactions.FirstOrDefaultAsync(item => item.Id == id, cancellationToken);
 
         if (transaction is null)
         {
             return TypedResults.NotFound();
         }
 
-        this.context.Transactions.Remove(transaction);
+        context.Transactions.Remove(transaction);
 
-        await this.context.SaveChangesAsync(cancellationToken);
+        await context.SaveChangesAsync(cancellationToken);
 
         return TypedResults.Ok();
     }

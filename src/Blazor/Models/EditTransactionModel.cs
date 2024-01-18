@@ -2,10 +2,10 @@
 
 public class EditTransactionModel
 {
-    private TransactionType transactionType;
     private GetAccountResponse? account;
-    private GetAccountResponse? transferAccount;
     private IncomeType incomeType;
+    private TransactionType transactionType;
+    private GetAccountResponse? transferAccount;
 
     public required int? Id { get; init; }
 
@@ -15,7 +15,7 @@ public class EditTransactionModel
         set
         {
             transactionType = value;
-            this.VisibilityUpdated?.Invoke(this, EventArgs.Empty);
+            VisibilityUpdated?.Invoke(this, EventArgs.Empty);
         }
     }
 
@@ -27,7 +27,7 @@ public class EditTransactionModel
         set
         {
             account = value;
-            this.VisibilityUpdated?.Invoke(this, EventArgs.Empty);
+            VisibilityUpdated?.Invoke(this, EventArgs.Empty);
         }
     }
 
@@ -37,7 +37,7 @@ public class EditTransactionModel
         set
         {
             transferAccount = value;
-            this.VisibilityUpdated?.Invoke(this, EventArgs.Empty);
+            VisibilityUpdated?.Invoke(this, EventArgs.Empty);
         }
     }
 
@@ -53,25 +53,25 @@ public class EditTransactionModel
         set
         {
             incomeType = value;
-            this.VisibilityUpdated?.Invoke(this, EventArgs.Empty);
+            VisibilityUpdated?.Invoke(this, EventArgs.Empty);
         }
     }
 
     public required decimal Amount { get; set; }
 
     public bool ShowIncomeType =>
-        (this.TransactionType == TransactionType.External && this.Account.OnBudget) 
-        || (this.TransactionType == TransactionType.Internal && this.Account.OnBudget != this.TransferAccount?.OnBudget);
+        (TransactionType == TransactionType.External && (Account?.OnBudget ?? false))
+        || (TransactionType == TransactionType.Internal && (Account?.OnBudget ?? false) != TransferAccount?.OnBudget);
 
-    public bool ShowTransferAccount => this.TransactionType == TransactionType.Internal;
+    public bool ShowTransferAccount => TransactionType == TransactionType.Internal;
 
     public bool ShowCategory =>
-        (this.TransactionType == TransactionType.External && this.IncomeType == IncomeType.None)
-        || (this.TransactionType == TransactionType.Internal 
-            && this.Account.OnBudget != this.TransferAccount?.OnBudget
-            && this.IncomeType == IncomeType.None);
+        (TransactionType == TransactionType.External && IncomeType == IncomeType.None)
+        || (TransactionType == TransactionType.Internal
+            && (Account?.OnBudget ?? false) != TransferAccount?.OnBudget
+            && IncomeType == IncomeType.None);
 
-    public bool ShowPayee => this.TransactionType == TransactionType.External;
+    public bool ShowPayee => TransactionType == TransactionType.External;
 
     public event EventHandler? VisibilityUpdated;
 }

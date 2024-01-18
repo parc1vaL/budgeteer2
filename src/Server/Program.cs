@@ -72,4 +72,10 @@ app.MapBudgets();
 
 app.MapFallbackToFile("index.html");
 
-app.Run();
+await using (var scope = app.Services.CreateAsyncScope())
+await using (var context = scope.ServiceProvider.GetRequiredService<BudgetContext>())
+{
+    await context.Database.MigrateAsync();
+}
+
+await app.RunAsync();

@@ -1,28 +1,16 @@
-using Budgeteer.Server.Features.Transactions;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 
 namespace Budgeteer.Server.Features.Budgets;
 
-public class BudgetService
+public class BudgetService(
+    BudgetContext context,
+    IValidator<GetBudgetRequest> getValidator,
+    IValidator<CreateOrUpdateBudgetRequest> createOrUpdateValidator)
 {
-    private readonly BudgetContext context;
-    private readonly IValidator<GetBudgetRequest> getValidator;
-    private readonly IValidator<CreateOrUpdateBudgetRequest> createOrUpdateValidator;
-
-    public BudgetService(
-        BudgetContext context,
-        IValidator<GetBudgetRequest> getValidator,
-        IValidator<CreateOrUpdateBudgetRequest> createOrUpdateValidator)
-    {
-        this.context = context;
-        this.getValidator = getValidator;
-        this.createOrUpdateValidator = createOrUpdateValidator;
-    }
-
     public async Task<IResult> GetBudget(GetBudgetRequest request, CancellationToken cancellationToken)
     {
-        var validationResult = await this.getValidator.ValidateAsync(request, cancellationToken);
+        var validationResult = await getValidator.ValidateAsync(request, cancellationToken);
 
         if (!validationResult.IsValid)
         {
@@ -37,7 +25,7 @@ public class BudgetService
         var endDate = startDate.AddMonths(1);
 
         // Gets the total income in on-budget accounts for the request month
-        var income = await this.context.Transactions
+        var income = await context.Transactions
             .Where(t =>
                 (t.Date < endDate
                  && t.Date >= startDate
@@ -48,7 +36,7 @@ public class BudgetService
             .SumAsync(t => t.Amount, cancellationToken);
 
         // Gets the total income in on-budget accounts prior to the request month
-        var incomePrevious = await this.context.Transactions
+        var incomePrevious = await context.Transactions
             .Where(t =>
                 (t.Date < startDate
                  && t.IncomeType == IncomeType.CurrentMonth)
@@ -57,7 +45,7 @@ public class BudgetService
             .SumAsync(t => t.Amount, cancellationToken);
 
         // Gets the total budget amount over all categories prior to the request month
-        var budgetPrevious = await this.context.Budgets
+        var budgetPrevious = await context.Budgets
             .Where(b => b.Month < startDate)
             .SumAsync(b => b.Amount, cancellationToken);
 
@@ -73,14 +61,14 @@ public class BudgetService
     public async Task<IResult> CreateOrUpdateBudget(CreateOrUpdateBudgetRequest request,
         CancellationToken cancellationToken)
     {
-        var validationResult = await this.createOrUpdateValidator.ValidateAsync(request, cancellationToken);
+        var validationResult = await createOrUpdateValidator.ValidateAsync(request, cancellationToken);
 
         if (!validationResult.IsValid)
         {
             return TypedResults.ValidationProblem(validationResult.ToDictionary());
         }
 
-        var budget = await this.context.Budgets
+        var budget = await context.Budgets
             .FirstOrDefaultAsync(
                 b => b.CategoryId == request.CategoryId && b.Month == new DateOnly(request.Year, request.Month, 1),
                 cancellationToken);
@@ -94,14 +82,14 @@ public class BudgetService
                 Amount = request.Amount,
             };
 
-            this.context.Budgets.Add(budget);
+            context.Budgets.Add(budget);
         }
         else
         {
             budget.Amount = request.Amount;
         }
 
-        await this.context.SaveChangesAsync(cancellationToken);
+        await context.SaveChangesAsync(cancellationToken);
 
         return TypedResults.Ok();
     }
@@ -113,8 +101,8 @@ public class BudgetService
 
         // For each category, gets the allocated budget for the request month
         var currentBudgetQuery =
-            from c in this.context.Categories
-            join b in this.context.Budgets
+            from c in context.Categories
+            join b in context.Budgets
                 on new { Id = c.Id, Month = budgetDate }
                 equals new { Id = b.CategoryId, Month = b.Month }
                 into budgets
@@ -123,8 +111,8 @@ public class BudgetService
 
         // For each category, gets the sum of all allocated budgets prior to the request month
         var previousBudgetQuery =
-            from c in this.context.Categories
-            join b in this.context.Budgets
+            from c in context.Categories
+            join b in context.Budgets
                 on new { Id = c.Id, Month = true }
                 equals new { Id = b.CategoryId, Month = b.Month < budgetDate }
                 into budgets
@@ -135,13 +123,13 @@ public class BudgetService
 
         // For each category, gets the sum of all transactions within the request month in on-budget accounts
         var currentOutflowQuery =
-            from c in this.context.Categories
-            join t in this.context.Transactions
+            from c in context.Categories
+            join t in context.Transactions
                 on new { Id = c.Id, After = true, Before = true }
                 equals new { Id = t.CategoryId!.Value, After = t.Date >= budgetDate, Before = t.Date < nextMonth, }
                 into transactions
             from t in transactions.DefaultIfEmpty()
-            join a in this.context.Accounts
+            join a in context.Accounts
                 on new { Id = t.AccountId, OnBudget = true, }
                 equals new { Id = a.Id, OnBudget = a.OnBudget, }
                 into accounts
@@ -152,13 +140,13 @@ public class BudgetService
 
         // For each category, gets the sum of all transactions prior to the request month in on-budget accounts
         var previousOutflowQuery =
-            from c in this.context.Categories
-            join t in this.context.Transactions
+            from c in context.Categories
+            join t in context.Transactions
                 on new { Id = c.Id, Before = true }
                 equals new { Id = t.CategoryId!.Value, Before = t.Date < budgetDate }
                 into transactions
             from t in transactions.DefaultIfEmpty()
-            join a in this.context.Accounts
+            join a in context.Accounts
                 on new { Id = t.AccountId, OnBudget = true, }
                 equals new { Id = a.Id, OnBudget = a.OnBudget, }
                 into accounts

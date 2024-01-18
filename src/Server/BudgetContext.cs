@@ -7,11 +7,8 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Budgeteer.Server;
 
-public class BudgetContext : DbContext
+public class BudgetContext(DbContextOptions options) : DbContext(options)
 {
-    public BudgetContext(DbContextOptions options) : base(options)
-    { }
-    
     public DbSet<Account> Accounts => Set<Account>();
     
     public DbSet<Category> Categories => Set<Category>();
@@ -22,7 +19,7 @@ public class BudgetContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        if (modelBuilder is null) throw new ArgumentNullException(nameof(modelBuilder));
+        ArgumentNullException.ThrowIfNull(modelBuilder);
 
         modelBuilder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
     }

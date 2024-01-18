@@ -4,29 +4,16 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Budgeteer.Server.Features.Accounts;
 
-public class AccountService
+public class AccountService(
+    BudgetContext context,
+    LinkGenerator linkGenerator,
+    IValidator<CreateAccountRequest> createValidator,
+    IValidator<UpdateAccountRequest> updateValidator)
 {
-    private readonly BudgetContext context;
-    private readonly LinkGenerator linkGenerator;
-    private readonly IValidator<CreateAccountRequest> createValidator;
-    private readonly IValidator<UpdateAccountRequest> updateValidator;
-
-    public AccountService(
-        BudgetContext context,
-        LinkGenerator linkGenerator,
-        IValidator<CreateAccountRequest> createValidator,
-        IValidator<UpdateAccountRequest> updateValidator)
-    {
-        this.context = context;
-        this.linkGenerator = linkGenerator;
-        this.createValidator = createValidator;
-        this.updateValidator = updateValidator;
-    }
-
     public async Task<IResult> GetAccountsAsync(CancellationToken cancellationToken)
     {
         return TypedResults.Ok(
-            await this.context.Accounts
+            await context.Accounts
                 .Select(a => new GetAccountResponse
                 {
                     Id = a.Id, 
@@ -39,7 +26,7 @@ public class AccountService
 
     public async Task<IResult> GetAccountAsync(int id, CancellationToken cancellationToken)
     {
-        var result = await this.context.Accounts
+        var result = await context.Accounts
             .Select(a => new GetAccountResponse
             {
                 Id = a.Id, 
@@ -56,19 +43,19 @@ public class AccountService
 
     public async Task<IResult> CreateAccountAsync(CreateAccountRequest request, CancellationToken cancellationToken)
     {
-        var validationResult = await this.createValidator.ValidateAsync(request, cancellationToken);
+        var validationResult = await createValidator.ValidateAsync(request, cancellationToken);
 
         if (!validationResult.IsValid)
         {
             return TypedResults.ValidationProblem(validationResult.ToDictionary());
         }
 
-        await using var dbTransaction = await this.context.Database.BeginTransactionAsync(cancellationToken);
+        await using var dbTransaction = await context.Database.BeginTransactionAsync(cancellationToken);
 
         var account = new Account { Name = request.Name, OnBudget = request.OnBudget, };
 
-        this.context.Accounts.Add(account);
-        await this.context.SaveChangesAsync(cancellationToken);
+        context.Accounts.Add(account);
+        await context.SaveChangesAsync(cancellationToken);
 
         var balance = new Transaction
         {
@@ -84,27 +71,27 @@ public class AccountService
             TransferTransactionId = null,
         };
 
-        this.context.Transactions.Add(balance);
-        await this.context.SaveChangesAsync(cancellationToken);
+        context.Transactions.Add(balance);
+        await context.SaveChangesAsync(cancellationToken);
 
         await dbTransaction.CommitAsync(cancellationToken);
 
         return TypedResults.Created(
-            this.linkGenerator.GetPathByName(Operations.Accounts.GetDetails, new() { ["id"] = account.Id, })
+            linkGenerator.GetPathByName(Operations.Accounts.GetDetails, new() { ["id"] = account.Id, })
             ?? throw new InvalidOperationException("Resource path could not be generated."));
     }
 
     public async Task<IResult> UpdateAccountAsync(int id, UpdateAccountRequest request,
         CancellationToken cancellationToken)
     {
-        var account = await this.context.Accounts.FirstOrDefaultAsync(item => item.Id == id, cancellationToken);
+        var account = await context.Accounts.FirstOrDefaultAsync(item => item.Id == id, cancellationToken);
 
         if (account is null)
         {
             return TypedResults.NotFound();
         }
 
-        var validationResult = await this.updateValidator.ValidateAsync(request, cancellationToken);
+        var validationResult = await updateValidator.ValidateAsync(request, cancellationToken);
 
         if (!validationResult.IsValid)
         {
@@ -113,23 +100,23 @@ public class AccountService
 
         account.Name = request.Name;
 
-        await this.context.SaveChangesAsync(cancellationToken);
+        await context.SaveChangesAsync(cancellationToken);
 
         return TypedResults.Ok();
     }
 
     public async Task<IResult> DeleteAccountAsync(int id, CancellationToken cancellationToken)
     {
-        var account = await this.context.Accounts.FirstOrDefaultAsync(item => item.Id == id, cancellationToken);
+        var account = await context.Accounts.FirstOrDefaultAsync(item => item.Id == id, cancellationToken);
 
         if (account is null)
         {
             return TypedResults.NotFound();
         }
 
-        this.context.Accounts.Remove(account);
+        context.Accounts.Remove(account);
 
-        await this.context.SaveChangesAsync(cancellationToken);
+        await context.SaveChangesAsync(cancellationToken);
 
         return TypedResults.Ok();
     }

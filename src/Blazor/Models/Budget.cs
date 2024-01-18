@@ -6,7 +6,7 @@ namespace Budgeteer.Blazor.Models;
 
 public class Budget
 {
-    public DateOnly Date { get; set; }
+    public required DateOnly Date { get; init; }
 
-    public GetBudgetResponse Item { get; set; }
+    public required GetBudgetResponse Item { get; init; }
 }

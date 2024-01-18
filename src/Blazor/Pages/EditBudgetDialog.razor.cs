@@ -11,7 +11,7 @@ public partial class EditBudgetDialog
 
     [Parameter] public EditBudgetModel Model { get; set; } = null!;
 
-    private MudNumericField<decimal> AmountField { get; set; }
+    private MudNumericField<decimal>? AmountField { get; set; }
 
     private void Cancel() => this.MudDialog.Cancel();
 
@@ -19,6 +19,6 @@ public partial class EditBudgetDialog
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        await this.AmountField.FocusAsync();
+        await (this.AmountField?.FocusAsync() ?? ValueTask.CompletedTask);
     }
 }

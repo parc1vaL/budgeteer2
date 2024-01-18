@@ -7,6 +7,7 @@ namespace Budgeteer.Server.Features.Accounts;
 public class AccountService(
     BudgetContext context,
     LinkGenerator linkGenerator,
+    MetricsService metricsService,
     IValidator<CreateAccountRequest> createValidator,
     IValidator<UpdateAccountRequest> updateValidator)
 {
@@ -76,9 +77,12 @@ public class AccountService(
 
         await dbTransaction.CommitAsync(cancellationToken);
 
-        return TypedResults.Created(
+        var result = TypedResults.Created(
             linkGenerator.GetPathByName(Operations.Accounts.GetDetails, new() { ["id"] = account.Id, })
             ?? throw new InvalidOperationException("Resource path could not be generated."));
+        
+        metricsService.AccountAdded();
+        return result;
     }
 
     public async Task<IResult> UpdateAccountAsync(int id, UpdateAccountRequest request,
@@ -102,6 +106,7 @@ public class AccountService(
 
         await context.SaveChangesAsync(cancellationToken);
 
+        metricsService.AccountUpdated();
         return TypedResults.Ok();
     }
 
@@ -118,6 +123,7 @@ public class AccountService(
 
         await context.SaveChangesAsync(cancellationToken);
 
+        metricsService.AccountDeleted();
         return TypedResults.Ok();
     }
 }

@@ -7,6 +7,8 @@ using Budgeteer.Server.Features.Transactions;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Resources;
 using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -18,6 +20,15 @@ builder.Services.AddTransient<AccountService>();
 builder.Services.AddTransient<CategoryService>();
 builder.Services.AddTransient<TransactionService>();
 builder.Services.AddTransient<BudgetService>();
+
+builder.Services.AddSingleton<MetricsService>();
+builder.Services.AddOpenTelemetry()
+    .ConfigureResource(resource => resource.AddService(builder.Environment.ApplicationName))
+    .WithMetrics(metrics => metrics
+        .AddRuntimeInstrumentation()
+        .AddAspNetCoreInstrumentation()
+        .AddMeter(MetricsService.MeterName)
+        .AddPrometheusExporter());
 
 builder.Services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
 
@@ -50,6 +61,8 @@ app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.yaml", $"{builder.E
 
 app.UseBlazorFrameworkFiles();
 app.UseStaticFiles();
+
+app.MapPrometheusScrapingEndpoint();
 
 // Configure the HTTP request pipeline.
 app.UseRouting();

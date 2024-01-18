@@ -10,7 +10,7 @@ public static class Operations
         public const string Update = "UpdateAccount";
         public const string Delete = "DeleteAccount";
     }
-
+    
     public static class Categories
     {
         public const string GetList = "GetCategories";

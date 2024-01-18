@@ -6,6 +6,7 @@ namespace Budgeteer.Server.Features.Categories;
 public class CategoryService(
     BudgetContext context,
     LinkGenerator linkGenerator,
+    MetricsService metricsService,
     IValidator<CreateCategoryRequest> createValidator,
     IValidator<UpdateCategoryRequest> updateValidator)
 {
@@ -50,9 +51,12 @@ public class CategoryService(
 
         await context.SaveChangesAsync(cancellationToken);
 
-        return TypedResults.Created(
+        var result = TypedResults.Created(
             linkGenerator.GetPathByName(Operations.Categories.GetDetails, new() { ["id"] = category.Id, })
                 ?? throw new InvalidOperationException("Resource path could not be generated."));
+        
+        metricsService.CategoryAdded();
+        return result;
     }
 
     public async Task<IResult> UpdateCategoryAsync(int id, UpdateCategoryRequest request, CancellationToken cancellationToken)
@@ -75,6 +79,7 @@ public class CategoryService(
 
         await context.SaveChangesAsync(cancellationToken);
 
+        metricsService.CategoryUpdated();
         return TypedResults.Ok();
     }
 
@@ -90,6 +95,7 @@ public class CategoryService(
         context.Categories.Remove(category);
         await context.SaveChangesAsync(cancellationToken);
 
+        metricsService.CategoryDeleted();
         return TypedResults.Ok();
     }
 }

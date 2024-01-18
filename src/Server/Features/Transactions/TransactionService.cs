@@ -6,6 +6,7 @@ namespace Budgeteer.Server.Features.Transactions;
 public class TransactionService(
     BudgetContext context,
     LinkGenerator linkGenerator,
+    MetricsService metricsService,
     IValidator<CreateTransactionRequest> createValidator,
     IValidator<UpdateTransactionRequest> updateValidator)
 {
@@ -70,9 +71,12 @@ public class TransactionService(
             return TypedResults.ValidationProblem(validationResult.ToDictionary());
         }
 
-        return request.TransactionType == TransactionType.External
+        var result = request.TransactionType == TransactionType.External
             ? await CreateExternalTransactionAsync(request, cancellationToken)
-            : await CreateInternalTransactionAsync(request, cancellationToken);        
+            : await CreateInternalTransactionAsync(request, cancellationToken);
+        
+        metricsService.TransactionAdded();
+        return result;
     }
 
     private async Task<IResult> CreateExternalTransactionAsync(CreateTransactionRequest request, CancellationToken cancellationToken)
@@ -175,45 +179,41 @@ public class TransactionService(
             return TypedResults.ValidationProblem(validationResult.ToDictionary());
         }
 
-        if (transaction.TransactionType == TransactionType.Internal)
+        if (transaction.TransactionType == TransactionType.External)
         {
-            if (!transaction.TransferTransactionId.HasValue)
-            {
-                throw new InvalidOperationException(
-                    $"Transaction with ID {id} has transaction type "
-                    + "'Transfer' but no transfer transaction ID set.");
-            }
+            var externalResult = request.TransactionType == TransactionType.Internal
+                ? await UpdateExternalToInternalAsync(transaction, request, cancellationToken)
+                : await UpdateExternalToExternalAsync(transaction, request, cancellationToken);
 
-            var transfer = await context.Transactions.FirstOrDefaultAsync(item => item.Id == transaction.TransferTransactionId.Value, cancellationToken);
-
-            if (transfer is null)
-            {
-                throw new InvalidOperationException(
-                    $"Transaction with ID {id} has transaction type 'Transfer' "
-                    + "but the transfer transaction with ID "
-                    + $"{transaction.TransferTransactionId.Value} does not exist.");
-            }
-
-            if (request.TransactionType == TransactionType.Internal)
-            {
-                return await UpdateInternalToInternalAsync(transaction, transfer, request, cancellationToken);
-            }
-            else
-            {
-                return await UpdateInternalToExternalAsync(transaction, transfer, request, cancellationToken);
-            }
+            metricsService.TransactionUpdated();
+            return externalResult;
         }
-        else
+        
+        if (!transaction.TransferTransactionId.HasValue)
         {
-            if (request.TransactionType == TransactionType.Internal)
-            {
-                return await UpdateExternalToInternalAsync(transaction, request, cancellationToken);
-            }
-            else
-            {
-                return await UpdateExternalToExternalAsync(transaction, request, cancellationToken);
-            }
+            throw new InvalidOperationException(
+                $"Transaction with ID {id} has transaction type "
+                + "'Transfer' but no transfer transaction ID set.");
         }
+
+        var transfer =
+            await context.Transactions.FirstOrDefaultAsync(
+                item => item.Id == transaction.TransferTransactionId.Value, cancellationToken);
+
+        if (transfer is null)
+        {
+            throw new InvalidOperationException(
+                $"Transaction with ID {id} has transaction type 'Transfer' "
+                + "but the transfer transaction with ID "
+                + $"{transaction.TransferTransactionId.Value} does not exist.");
+        }
+
+        var internalResult = request.TransactionType == TransactionType.Internal
+            ? await UpdateInternalToInternalAsync(transaction, transfer, request, cancellationToken)
+            : await UpdateInternalToExternalAsync(transaction, transfer, request, cancellationToken);
+
+        metricsService.TransactionUpdated();
+        return internalResult;
     }
 
     private async Task<IResult> UpdateInternalToInternalAsync(
@@ -395,6 +395,7 @@ public class TransactionService(
 
         await context.SaveChangesAsync(cancellationToken);
 
+        metricsService.TransactionDeleted();
         return TypedResults.Ok();
     }
 }
